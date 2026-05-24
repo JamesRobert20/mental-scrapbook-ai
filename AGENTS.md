@@ -17,6 +17,7 @@ Product overview, install, env template, and run commands: **[README.md](./READM
 | Concern              | Choice                                                          | Notes                                                                 |
 | -------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Runtime              | Expo SDK 54, React 19, RN 0.81, New Architecture ON             | Versioned docs: https://docs.expo.dev/versions/v54.0.0/               |
+| React Compiler       | **ON** (`app.json` → `experiments.reactCompiler`)               | Do not hand-memo by default — see §4.1                                |
 | Router               | `expo-router` (file-based, typed routes)                        | JS `Tabs` (custom pill tabBar), not NativeTabs (design is custom)     |
 | State (client)       | `zustand`                                                       | Strict pattern — see §4                                               |
 | Server state / cache | `@tanstack/react-query`                                         | Wrap all async data in queries/mutations                              |
@@ -26,7 +27,7 @@ Product overview, install, env template, and run commands: **[README.md](./READM
 | Auth                 | Local email+password (SQLite + secure-store)                    | Hackathon scope — auth lives entirely on device, see §9               |
 | AI                   | Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/openai`)         | Tool-calling agent on the server route, `useChat` on client           |
 | Voice in             | `expo-audio` (record) → server STT (Whisper via OpenAI)         | NOT `expo-av` (deprecated)                                            |
-| Voice out            | `expo-speech` for v1 (zero cost, on-device)                     | Swap to ElevenLabs/OpenAI TTS later if quality demands                |
+| Voice out            | OpenAI TTS via `/api/speak` → `expo-audio` playback             | `expo-speech` is the offline fallback when the network call fails     |
 | OAuth (Gmail)        | `expo-auth-session` + `expo-web-browser`                        | Google OAuth via auth code → exchange on API route                    |
 | Styling              | `StyleSheet.create` + design tokens from `constants/theme.ts`   | No CSS, no Tailwind                                                   |
 | Fonts                | `@expo-google-fonts/playfair-display`, `…/hanken-grotesk`       | Loaded once in root `_layout`                                         |
@@ -329,6 +330,37 @@ This is a hackathon, but the code stays clean. Non-negotiable:
 - Extract any JSX subtree > ~30 lines into its own component in `components/<area>/`.
 - Hooks at the top of the function. Early returns for loading / error / unauthenticated states. Happy path last.
 
+### React 19 + React Compiler (§1 stack — compiler ON)
+
+`experiments.reactCompiler: true` in `app.json`. The compiler auto-memoizes components and callbacks. **Do not reach for `useCallback`, `useMemo`, or `memo` unless you have a documented reason** (see exceptions below).
+
+**Default patterns**
+
+- Write plain functions in render for event handlers (`onPress={() => …}`, `async function handleSend() { … }`). The compiler stabilizes what needs stabilizing.
+- **Destructure functions from hooks at the top of the component** — never dot into a hook return object inside JSX or a nested handler (`router.push` → `const { push } = useRouter()` then `push(...)`). Same for `useChat`, `useRecorder`, etc.
+- **Prefer event handlers over effects** for user-driven work (send message, record mic, navigate). Effects are for synchronizing with *external* systems (bootstrap session once, splash hide, web color-scheme hydration, starting a Reanimated loop on mount).
+- **Derive UI state during render**, not in `useEffect` (`const isThinking = chatStatus === 'streaming'` — not `useEffect` + `setState`).
+- **Stable references for third-party instances**: if a library stores the object you pass in (e.g. `new DefaultChatTransport(...)` to `useChat`), create it once via `useRef` lazy init or module scope — a new instance every render still breaks even with the compiler.
+
+**`useEffect` rules**
+
+- Dependencies must be **primitives or stable values** — not whole objects you only use fields from.
+- Cleanup on unmount for subscriptions, timers, and in-flight async (`cancelled` flag pattern in `use-auth-bootstrap`).
+- Do **not** use an effect to call a parent callback when something changes; call the callback from the event/stream handler that caused the change (`onFinish` on `useChat`, not `useEffect([messages])`).
+
+**Latest callback without re-running effects**
+
+- `useEffectEvent` is the React 19 API for “always call the latest handler inside an effect without listing it in deps.” It is **not** exported from our current `react@19.1` package yet.
+- Until it ships here: **`useRef` + sync in render** for callbacks passed into long-lived configs (`onAssistantText` → `onAssistantTextRef.current = onAssistantText` each render, read `.current` inside `onFinish`).
+
+**When manual memo is still OK**
+
+- `React.memo` on list row components **only** if profiling shows unnecessary row re-renders and the compiler did not fix it (FlashList rows with heavy children).
+- `useMemo` for **genuinely expensive** pure computation (large sort/filter), not for “stable” callbacks.
+- Reanimated: in **worklets** (`useAnimatedStyle`), `.value` is still normal; in **plain JS** (component body / effects), prefer shared-value `.get()` / `.set()` when the Reanimated + compiler docs require it.
+
+**References:** Vercel `vercel-react-native-skills` rules `react-compiler-destructure-functions`, `react-compiler-reanimated-shared-values`; React docs on [React Compiler](https://react.dev/learn/react-compiler).
+
 ### Errors
 
 - Throw `Error` subclasses defined in `lib/types/errors.ts` (e.g. `AuthError`, `ValidationError`, `IntegrationError`). Never throw bare strings.
@@ -583,8 +615,14 @@ All tokens are defined in `constants/theme.ts`. **Never inline literal colors, f
 ## 13. Voice input/output
 
 - Recording: `expo-audio` `useAudioRecorder({ extension: '.m4a', ... })`. Request `RecordingPresets.HIGH_QUALITY`. Always check + request mic permission via `requestRecordingPermissionsAsync()` before recording.
-- Press-and-hold UX: use `Gesture.LongPress()` from `react-native-gesture-handler` (or a Pressable with `onPressIn`/`onPressOut`) to start/stop recording. Provide haptic feedback (`expo-haptics`).
-- Playback / TTS: `expo-speech.speak(text, { language: 'en', rate: 1.0 })`. Subscribe to `onDone` to update `captureStatus` back to `idle`.
+- Press-and-hold UX: use `Gesture.LongPress()` from `react-native-gesture-handler` (or a Pressable with `onPressIn`/`onPressOut`) to start/stop recording. Provide haptic feedback via `lib/infrastructure/haptics.ts`.
+- TTS: `hooks/use-speaker.ts` is the only abstraction the UI talks to. It POSTs to `/api/speak` (OpenAI TTS), writes the returned mp3 into `Paths.cache` via `expo-file-system`, and plays it through `expo-audio`'s `createAudioPlayer`. If the network call fails, it falls back to `expo-speech` so the user still gets a reply. **To swap providers later, edit only `server/integrations/openai/tts.ts` (or add a sibling integration and re-export from `server/services/speech.service.ts`).** Do not branch on provider in the hook.
+
+## 13.1 Haptics
+
+- One entry point: `tap(tone)` in `lib/infrastructure/haptics.ts`. Never import `expo-haptics` directly from components or hooks.
+- Tones: `light` (default button/text-send), `medium` (primary button / mic press-in), `selection` (tab switch / list row), `success` (auth success, completed action), `warning` (destructive intent), `error` (request failure).
+- Haptics are best-effort polish — never await, never throw from the wrapper.
 
 ---
 

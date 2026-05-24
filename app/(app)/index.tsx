@@ -1,6 +1,13 @@
-import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { useEffect, useState } from 'react';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import CaptureOrb from '@/components/capture/capture-orb';
 import TranscriptStream from '@/components/capture/transcript-stream';
@@ -9,6 +16,7 @@ import ScreenHeader from '@/components/layout/screen-header';
 import { useCaptureChat } from '@/hooks/use-capture-chat';
 import { useRecorder } from '@/hooks/use-recorder';
 import { useSpeaker } from '@/hooks/use-speaker';
+import { tap } from '@/lib/infrastructure/haptics';
 import { transcribeAudioFile } from '@/lib/infrastructure/transcribe';
 import { setCaptureStatus, useCaptureStatus } from '@/stores/capture.store';
 import { Colors, Spacing } from '@/constants/theme';
@@ -20,36 +28,54 @@ const STATUS_MESSAGES: Record<string, string> = {
   speaking: 'Speaking…',
 };
 
+const TAB_BAR_OFFSET = 96;
+
 export default function CaptureScreen() {
   const [text, setText] = useState('');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const status = useCaptureStatus();
+  const insets = useSafeAreaInsets();
   const { speak } = useSpeaker();
   const { startRecording, stopRecording } = useRecorder();
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   const { messages, submitText, status: chatStatus } = useCaptureChat({
     onAssistantText: speak,
   });
 
-  const handleSendText = useCallback(async () => {
+  async function handleSendText() {
     const trimmed = text.trim();
     if (!trimmed || chatStatus === 'streaming' || chatStatus === 'submitted') return;
 
+    tap('light');
     setText('');
     await submitText(trimmed);
-  }, [text, chatStatus, submitText]);
+  }
 
-  const handleMicPressIn = useCallback(async () => {
+  async function handleMicPressIn() {
     try {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      tap('medium');
       setCaptureStatus('recording');
       await startRecording();
     } catch {
+      tap('error');
       setCaptureStatus('idle');
     }
-  }, [startRecording]);
+  }
 
-  const handleMicPressOut = useCallback(async () => {
+  async function handleMicPressOut() {
     try {
+      tap('light');
       setCaptureStatus('thinking');
       const uri = await stopRecording();
       if (!uri) {
@@ -65,9 +91,10 @@ export default function CaptureScreen() {
 
       await submitText(transcript);
     } catch {
+      tap('error');
       setCaptureStatus('idle');
     }
-  }, [stopRecording, submitText]);
+  }
 
   const statusMessage =
     chatStatus === 'streaming' || chatStatus === 'submitted'
@@ -75,14 +102,24 @@ export default function CaptureScreen() {
       : STATUS_MESSAGES[status];
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : insets.top}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive">
         <ScreenHeader />
         <CaptureOrb />
         <TranscriptStream messages={messages} />
+      </ScrollView>
+      <View
+        style={[
+          styles.dock,
+          { paddingBottom: keyboardVisible ? Spacing.sm : insets.bottom + TAB_BAR_OFFSET },
+        ]}>
         <VoiceInputBar
           value={text}
           onChangeText={setText}
@@ -91,9 +128,10 @@ export default function CaptureScreen() {
           onSubmit={handleSendText}
           statusMessage={statusMessage}
           disabled={chatStatus === 'streaming' || chatStatus === 'submitted'}
+          recording={status === 'recording'}
         />
-      </ScrollView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -104,6 +142,10 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 1,
-    paddingBottom: 120,
+    paddingBottom: Spacing.md,
+  },
+  dock: {
+    paddingTop: Spacing.sm,
+    backgroundColor: Colors.light.background,
   },
 });

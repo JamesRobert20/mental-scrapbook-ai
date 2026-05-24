@@ -129,6 +129,7 @@ export default function SyncGmailScreen() {
 const styles = StyleSheet.create({
   scroll: {
     padding: Spacing.screenPadding,
+    paddingBottom: 140,
     gap: Spacing.lg,
   },
   intro: {

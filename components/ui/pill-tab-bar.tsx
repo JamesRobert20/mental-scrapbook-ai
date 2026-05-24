@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import Text from '@/components/ui/text';
+import { tap } from '@/lib/infrastructure/haptics';
 import { Colors, Radii, Spacing } from '@/constants/theme';
 
 const TAB_CONFIG: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
@@ -29,7 +30,10 @@ export default function PillTabBar({ state, navigation, descriptors }: BottomTab
           return (
             <Pressable
               key={route.key}
-              onPress={() => navigation.navigate(route.name)}
+              onPress={() => {
+                if (!focused) tap('selection');
+                navigation.navigate(route.name);
+              }}
               style={[styles.tab, focused && styles.tabActive]}>
               <Ionicons
                 name={config.icon}

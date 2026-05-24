@@ -16,6 +16,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="security" options={{ title: 'Security' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="language" options={{ title: 'Language' }} />
+      <Stack.Screen name="voice" options={{ title: 'Voice' }} />
       <Stack.Screen name="sync-gmail" options={{ title: 'Sync Gmail' }} />
     </Stack>
   );

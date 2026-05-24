@@ -6,13 +6,12 @@ import {
 } from 'ai';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetch as expoFetch } from 'expo/fetch';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { ChatAgentUIMessage } from '@/lib/ai/chat-types';
 import { agentTools } from '@/lib/ai/tools';
 import { apiUrl } from '@/lib/infrastructure/api-url';
-
-type AgentToolName = keyof typeof agentTools;
+import { tap } from '@/lib/infrastructure/haptics';
 import { syncGmailTodos } from '@/lib/services/gmail.service';
 import {
   completeTodoForCurrentUser,
@@ -22,57 +21,66 @@ import {
 import type { CreateTodoInput } from '@/lib/z/todo';
 import { setCaptureStatus } from '@/stores/capture.store';
 
+type AgentToolName = keyof typeof agentTools;
+
 type UseCaptureChatOptions = {
   onAssistantText?: (text: string) => void;
 };
 
+async function executeTool(
+  queryClient: ReturnType<typeof useQueryClient>,
+  toolCall: { toolName: string; input: unknown },
+) {
+  switch (toolCall.toolName) {
+    case 'createTodo': {
+      const input = toolCall.input as Omit<CreateTodoInput, 'source'>;
+      const todo = await createTodoForCurrentUser({ ...input, source: 'voice' });
+      await queryClient.invalidateQueries({ queryKey: ['todos'] });
+      return todo;
+    }
+    case 'completeTodo': {
+      const { id } = toolCall.input as { id: string };
+      await completeTodoForCurrentUser(id);
+      await queryClient.invalidateQueries({ queryKey: ['todos'] });
+      return { success: true };
+    }
+    case 'listTodos': {
+      const { category } = (toolCall.input ?? {}) as {
+        category?: 'important' | 'schedule' | 'general';
+      };
+      return listTodosForCurrentUser(category);
+    }
+    case 'pullGmailTodos': {
+      const { since } = (toolCall.input ?? {}) as { since?: string };
+      return syncGmailTodos({ since });
+    }
+    default:
+      throw new Error(`Unknown tool: ${toolCall.toolName}`);
+  }
+}
+
 export function useCaptureChat(options: UseCaptureChatOptions = {}) {
   const queryClient = useQueryClient();
   const addToolOutputRef = useRef<ChatAddToolOutputFunction<ChatAgentUIMessage> | null>(null);
+  const onAssistantTextRef = useRef(options.onAssistantText);
+  onAssistantTextRef.current = options.onAssistantText;
 
-  const executeTool = useCallback(
-    async (toolCall: { toolName: string; input: unknown }) => {
-      switch (toolCall.toolName) {
-        case 'createTodo': {
-          const input = toolCall.input as Omit<CreateTodoInput, 'source'>;
-          const todo = await createTodoForCurrentUser({ ...input, source: 'voice' });
-          await queryClient.invalidateQueries({ queryKey: ['todos'] });
-          return todo;
-        }
-        case 'completeTodo': {
-          const { id } = toolCall.input as { id: string };
-          await completeTodoForCurrentUser(id);
-          await queryClient.invalidateQueries({ queryKey: ['todos'] });
-          return { success: true };
-        }
-        case 'listTodos': {
-          const { category } = (toolCall.input ?? {}) as {
-            category?: 'important' | 'schedule' | 'general';
-          };
-          return listTodosForCurrentUser(category);
-        }
-        case 'pullGmailTodos': {
-          const { since } = (toolCall.input ?? {}) as { since?: string };
-          return syncGmailTodos({ since });
-        }
-        default:
-          throw new Error(`Unknown tool: ${toolCall.toolName}`);
-      }
-    },
-    [queryClient],
-  );
-
-  const chat = useChat<ChatAgentUIMessage>({
-    transport: new DefaultChatTransport({
+  const transportRef = useRef<DefaultChatTransport<ChatAgentUIMessage> | null>(null);
+  if (!transportRef.current) {
+    transportRef.current = new DefaultChatTransport({
       api: apiUrl('/api/chat'),
       fetch: expoFetch as unknown as typeof globalThis.fetch,
-    }),
+    });
+  }
+
+  const chat = useChat<ChatAgentUIMessage>({
+    transport: transportRef.current,
     onToolCall: async ({ toolCall }) => {
       const addToolOutput = addToolOutputRef.current;
       if (!addToolOutput) return;
 
       try {
-        const output = await executeTool(toolCall);
+        const output = await executeTool(queryClient, toolCall);
         addToolOutput({
           tool: toolCall.toolName as AgentToolName,
           toolCallId: toolCall.toolCallId,
@@ -96,27 +104,27 @@ export function useCaptureChat(options: UseCaptureChatOptions = {}) {
         .join('\n')
         .trim();
       if (text) {
-        options.onAssistantText?.(text);
+        onAssistantTextRef.current?.(text);
       }
     },
     onError: () => {
+      tap('error');
       setCaptureStatus('idle');
     },
   });
+
+  const { sendMessage } = chat;
 
   useEffect(() => {
     addToolOutputRef.current = chat.addToolOutput;
   }, [chat.addToolOutput]);
 
-  const submitText = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed) return;
-      setCaptureStatus('thinking');
-      await chat.sendMessage({ text: trimmed });
-    },
-    [chat],
-  );
+  async function submitText(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setCaptureStatus('thinking');
+    await sendMessage({ text: trimmed });
+  }
 
   return { ...chat, submitText };
 }

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import Text from '@/components/ui/text';
+import { tap } from '@/lib/infrastructure/haptics';
 import { Colors, Spacing } from '@/constants/theme';
 
 type Props = {
@@ -12,8 +13,13 @@ type Props = {
 };
 
 export default function SettingsRow({ label, icon, onPress, destructive }: Props) {
+  const handlePress = () => {
+    tap(destructive ? 'warning' : 'selection');
+    onPress?.();
+  };
+
   return (
-    <Pressable onPress={onPress} style={styles.row}>
+    <Pressable onPress={handlePress} style={styles.row}>
       <Ionicons
         name={icon}
         size={20}

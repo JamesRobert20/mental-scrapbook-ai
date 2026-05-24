@@ -12,6 +12,7 @@ export const Routes = {
     security: '/(app)/settings/security' as Href,
     notifications: '/(app)/settings/notifications' as Href,
     language: '/(app)/settings/language' as Href,
+    voice: '/(app)/settings/voice' as Href,
     syncGmail: '/(app)/settings/sync-gmail' as Href,
   },
 } as const;

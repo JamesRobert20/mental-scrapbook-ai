@@ -61,6 +61,11 @@ export default function ProfileScreen() {
             onPress={() => router.push(Routes.settings.language)}
           />
           <SettingsRow
+            label="Voice"
+            icon="mic-circle-outline"
+            onPress={() => router.push(Routes.settings.voice)}
+          />
+          <SettingsRow
             label="Sync Gmail"
             icon="sync-outline"
             onPress={() => router.push(Routes.settings.syncGmail)}

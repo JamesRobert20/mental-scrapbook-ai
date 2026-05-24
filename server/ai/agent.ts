@@ -5,7 +5,7 @@ import { requireEnv } from '@/server/env';
 
 import { SYSTEM_PROMPT } from './prompts';
 
-const DEFAULT_MODEL = process.env.AI_GATEWAY_CHAT_MODEL ?? 'anthropic/claude-sonnet-4.5';
+const DEFAULT_MODEL = 'google/gemini-3-flash';
 
 export function createChatAgent() {
   requireEnv('AI_GATEWAY_API_KEY');

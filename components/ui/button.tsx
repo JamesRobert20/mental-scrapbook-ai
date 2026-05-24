@@ -1,12 +1,14 @@
 import {
   Pressable,
   StyleSheet,
+  type GestureResponderEvent,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 
 import Text from '@/components/ui/text';
+import { tap } from '@/lib/infrastructure/haptics';
 import { Colors, Radii, Spacing } from '@/constants/theme';
 
 type Props = Omit<PressableProps, 'style'> & {
@@ -15,10 +17,23 @@ type Props = Omit<PressableProps, 'style'> & {
   style?: StyleProp<ViewStyle>;
 };
 
-export default function Button({ label, variant = 'primary', style, disabled, ...rest }: Props) {
+export default function Button({
+  label,
+  variant = 'primary',
+  style,
+  disabled,
+  onPress,
+  ...rest
+}: Props) {
+  const handlePress = (event: GestureResponderEvent) => {
+    tap('medium');
+    onPress?.(event);
+  };
+
   return (
     <Pressable
       disabled={disabled}
+      onPress={handlePress}
       style={({ pressed }) => [
         styles.base,
         variant === 'primary' ? styles.primary : styles.ghost,
