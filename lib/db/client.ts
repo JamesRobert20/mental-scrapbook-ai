@@ -32,7 +32,8 @@ expoDb.execSync(`
     priority TEXT NOT NULL,
     source TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    completed_at TEXT
+    completed_at TEXT,
+    calendar_event_id TEXT
   );
   CREATE TABLE IF NOT EXISTS gmail_tokens (
     user_id TEXT PRIMARY KEY NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -63,6 +64,12 @@ for (const column of ['last_synced_at TEXT', 'last_seen_message_id TEXT']) {
 
 try {
     expoDb.execSync(`ALTER TABLE users ADD COLUMN avatar_uri TEXT;`)
+} catch {
+    // column already present on fresh installs
+}
+
+try {
+    expoDb.execSync(`ALTER TABLE todos ADD COLUMN calendar_event_id TEXT;`)
 } catch {
     // column already present on fresh installs
 }

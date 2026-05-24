@@ -12,6 +12,7 @@ type PreferencesState = {
     gmailAutoSyncIntervalSeconds: AutoSyncIntervalSeconds
     notificationsEnabled: boolean
     reminderLeadMinutes: number
+    calendarSyncEnabled: boolean
 }
 
 const preferencesStore = create<PreferencesState>(() => ({
@@ -19,7 +20,8 @@ const preferencesStore = create<PreferencesState>(() => ({
     gmailAutoSyncEnabled: true,
     gmailAutoSyncIntervalSeconds: DEFAULT_AUTO_SYNC_INTERVAL,
     notificationsEnabled: true,
-    reminderLeadMinutes: 10
+    reminderLeadMinutes: 10,
+    calendarSyncEnabled: false
 }))
 
 const { setState, getState } = preferencesStore
@@ -54,4 +56,12 @@ export function setNotificationsEnabled(enabled: boolean): void {
 
 export function setReminderLeadMinutes(minutes: number): void {
     setState({ reminderLeadMinutes: minutes })
+}
+
+export const useCalendarSyncEnabled = () => preferencesStore(s => s.calendarSyncEnabled)
+
+export const getCalendarSyncEnabled = (): boolean => getState().calendarSyncEnabled
+
+export function setCalendarSyncEnabled(enabled: boolean): void {
+    setState({ calendarSyncEnabled: enabled })
 }

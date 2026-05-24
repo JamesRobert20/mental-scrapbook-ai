@@ -20,9 +20,39 @@ export async function insertTodo(row: typeof todos.$inferInsert): Promise<TodoRo
     return rows[0]
 }
 
+export async function findTodoByIdForUser(
+    id: string,
+    userId: string
+): Promise<TodoRow | undefined> {
+    const rows = await db
+        .select()
+        .from(todos)
+        .where(and(eq(todos.id, id), eq(todos.userId, userId)))
+        .limit(1)
+    return rows[0]
+}
+
 export async function completeTodoById(id: string, userId: string): Promise<void> {
     await db
         .update(todos)
         .set({ completedAt: new Date().toISOString() })
         .where(and(eq(todos.id, id), eq(todos.userId, userId)))
+}
+
+export async function setTodoCalendarEventId(
+    id: string,
+    userId: string,
+    calendarEventId: string | null
+): Promise<void> {
+    await db
+        .update(todos)
+        .set({ calendarEventId })
+        .where(and(eq(todos.id, id), eq(todos.userId, userId)))
+}
+
+export async function listTodosWithCalendarEventForUser(
+    userId: string
+): Promise<TodoRow[]> {
+    const rows = await db.select().from(todos).where(eq(todos.userId, userId))
+    return rows.filter(r => r.calendarEventId !== null && r.calendarEventId !== '')
 }

@@ -12,6 +12,7 @@ export const Routes = {
         notifications: '/(app)/profile/notifications' as Href,
         language: '/(app)/profile/language' as Href,
         voice: '/(app)/profile/voice' as Href,
-        syncGmail: '/(app)/profile/sync-gmail' as Href
+        syncGmail: '/(app)/profile/sync-gmail' as Href,
+        calendar: '/(app)/profile/calendar' as Href
     }
 } as const

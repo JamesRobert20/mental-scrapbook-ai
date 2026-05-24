@@ -141,6 +141,11 @@ export default function ProfileScreen() {
                         icon="sync-outline"
                         onPress={() => router.push(Routes.settings.syncGmail)}
                     />
+                    <SettingsRow
+                        label="Calendar"
+                        icon="calendar-outline"
+                        onPress={() => router.push(Routes.settings.calendar)}
+                    />
                 </SettingsSection>
 
                 <SettingsSection title="Session">

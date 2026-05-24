@@ -29,7 +29,8 @@ export const todos = sqliteTable('todos', {
     priority: text('priority').notNull(),
     source: text('source').notNull(),
     createdAt: text('created_at').notNull(),
-    completedAt: text('completed_at')
+    completedAt: text('completed_at'),
+    calendarEventId: text('calendar_event_id')
 })
 
 export const gmailTokens = sqliteTable('gmail_tokens', {

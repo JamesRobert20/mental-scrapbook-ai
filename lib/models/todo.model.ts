@@ -17,6 +17,7 @@ export type Todo = {
     source: TodoSource
     createdAt: string
     completedAt: string | null
+    calendarEventId: string | null
 }
 
 export function mapTodoRow(row: TodoRow): Todo {
@@ -29,6 +30,7 @@ export function mapTodoRow(row: TodoRow): Todo {
         priority: row.priority as TodoPriority,
         source: row.source as TodoSource,
         createdAt: row.createdAt,
-        completedAt: row.completedAt
+        completedAt: row.completedAt,
+        calendarEventId: row.calendarEventId ?? null
     }
 }
