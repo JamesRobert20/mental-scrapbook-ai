@@ -1,50 +1,82 @@
-# Welcome to your Expo app 👋
+# Mental Scrapbook
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A serene, voice-first daily-planning assistant built with Expo. Hold the mic (or type), speak freely, and an AI agent transcribes your thoughts, creates structured todos, and replies in voice with on-screen transcription. Connect Gmail in Settings to turn emails into todos.
 
-## Get started
+**Demo target:** Expo Go on a physical device (no custom native builds).
 
-1. Install dependencies
+## Prerequisites
 
-   ```bash
-   npm install
-   ```
+- [Node.js](https://nodejs.org/) 20+
+- [pnpm](https://pnpm.io/)
+- [Expo Go](https://expo.dev/go) on your phone
+- API keys (see [Environment variables](#environment-variables))
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Quick start
 
 ```bash
-npm run reset-project
+pnpm install
+# Create .env from the template in "Environment variables" below
+pnpm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Scan the QR code with Expo Go.
 
-## Learn more
+### Physical device + API routes
 
-To learn more about developing your project with Expo, look at the following resources:
+Chat, transcription, and Gmail OAuth call Expo Router `+api` routes on your dev machine. From a phone, use a tunnel so `/api/*` resolves:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+pnpm start --tunnel
+```
 
-## Join the community
+## Scripts
 
-Join our community of developers creating universal apps.
+| Command | Description |
+| ------- | ----------- |
+| `pnpm start` | Expo dev server (Metro) |
+| `pnpm start --tunnel` | Dev server with tunnel (device + `/api`) |
+| `pnpm typecheck` | TypeScript check |
+| `pnpm lint` | ESLint |
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Environment variables
+
+Create a `.env` file in the project root (gitignored):
+
+```env
+# Server-only — never prefix secrets with EXPO_PUBLIC_
+AI_GATEWAY_API_KEY=...
+OPENAI_API_KEY=...
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+
+# Public — safe in the JS bundle (OAuth client id for the device)
+EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID=...
+```
+
+| Variable | Purpose |
+| -------- | ------- |
+| `AI_GATEWAY_API_KEY` | [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) — chat models |
+| `OPENAI_API_KEY` | OpenAI direct — Whisper transcription (Gateway doesn't proxy audio) |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth (server token exchange) |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth (server only) |
+| `EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID` | Same client ID, exposed to `expo-auth-session` on device |
+
+Optional: set `AI_GATEWAY_CHAT_MODEL` to override the default chat model (e.g. `anthropic/claude-sonnet-4.5`). List models: `curl https://ai-gateway.vercel.sh/v1/models`.
+
+## Architecture (high level)
+
+- **Client:** Expo app — SQLite on device (users, sessions, todos), Zustand + React Query, voice via `expo-audio` / `expo-speech`.
+- **Server:** `app/api/**/+api.ts` thin handlers → `server/` (AI agent, Whisper, Gmail). No separate backend repo.
+- **AI:** Vercel AI SDK through AI Gateway; todo writes from tool calls run on the client (device DB).
+
+Layering, naming, and agent implementation rules live in **[AGENTS.md](./AGENTS.md)** (required reading for coding agents and contributors).
+
+## Troubleshooting
+
+**`ERR_PNPM_IGNORED_BUILDS`** — Approve the package in `pnpm-workspace.yaml` under `allowBuilds:` (already set for `unrs-resolver` and `esbuild` in this repo).
+
+**Type errors on routes** — Run `pnpm start` once so Expo Router regenerates `.expo/types/router.d.ts`, or use constants from `lib/navigation/routes.ts`.
+
+## License
+
+Private hackathon project.
