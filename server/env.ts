@@ -4,6 +4,7 @@ import { z } from 'zod';
 const schema = z.object({
   AI_GATEWAY_API_KEY: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
+  GROQ_API_KEY: z.string().min(1).optional(),
   GOOGLE_OAUTH_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
 });
@@ -11,6 +12,7 @@ const schema = z.object({
 const parsed = schema.safeParse({
   AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  GROQ_API_KEY: process.env.GROQ_API_KEY,
   GOOGLE_OAUTH_CLIENT_ID: process.env.GOOGLE_OAUTH_CLIENT_ID,
   GOOGLE_OAUTH_CLIENT_SECRET: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
 });

@@ -8,12 +8,12 @@ const requestSchema = z.object({
 });
 
 export async function handleSpeakRequest(request: Request): Promise<Response> {
-  const body = await request.json();
-  const input = requestSchema.parse(body);
+  const payload = await request.json();
+  const input = requestSchema.parse(payload);
 
-  const { audio, contentType } = await synthesizeSpeech(input);
+  const { body, contentType } = await synthesizeSpeech(input);
 
-  return new Response(audio, {
+  return new Response(body, {
     status: 200,
     headers: {
       'Content-Type': contentType,

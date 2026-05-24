@@ -26,7 +26,7 @@ Product overview, install, env template, and run commands: **[README.md](./READM
 | Secrets / session    | `expo-secure-store`                                             | Auth tokens, OAuth refresh tokens, Gmail tokens                       |
 | Auth                 | Local email+password (SQLite + secure-store)                    | Hackathon scope — auth lives entirely on device, see §9               |
 | AI                   | Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/openai`)         | Tool-calling agent on the server route, `useChat` on client           |
-| Voice in             | `expo-audio` (record) → server STT (Whisper via OpenAI)         | NOT `expo-av` (deprecated)                                            |
+| Voice in             | `expo-audio` (record) → server STT (Whisper Large v3 Turbo on Groq) | NOT `expo-av` (deprecated); Groq is ~4-5x faster than OpenAI Whisper |
 | Voice out            | OpenAI TTS via `/api/speak` → `expo-audio` playback             | `expo-speech` is the offline fallback when the network call fails     |
 | OAuth (Gmail)        | `expo-auth-session` + `expo-web-browser`                        | Google OAuth via auth code → exchange on API route                    |
 | Styling              | `StyleSheet.create` + design tokens from `constants/theme.ts`   | No CSS, no Tailwind                                                   |
@@ -76,7 +76,7 @@ app/api/auth/sign-in+api.ts  →  POST /api/auth/sign-in   (only if that endpoin
 | Concern | Where it runs | Why |
 | -------- | ------------- | --- |
 | OpenAI chat / tool loop (streaming) | `app/api/chat+api.ts` | API key must stay server-side |
-| Whisper transcription | `app/api/transcribe+api.ts` | Same |
+| Whisper transcription | `app/api/transcribe+api.ts` | Calls Groq (not AI Gateway — Gateway doesn't proxy audio) |
 | Gmail OAuth code → tokens | `app/api/gmail/callback+api.ts` | Client secret |
 | Gmail REST fetch + parse emails | `app/api/gmail/sync+api.ts` | Access token handling |
 | Users, sessions, todos CRUD | **Client** (`lib/services` → repos → expo-sqlite) | DB file lives on the phone in Expo Go |
@@ -211,7 +211,10 @@ server/                           # SERVER-ONLY. Imported only by +api.ts files.
     runner.ts                     # runAgentTurn — invokes streamText with model+tools
   integrations/
     openai/
-      whisper.ts                  # audio → text
+    groq/
+      whisper.ts                  # audio → text (whisper-large-v3-turbo, low-latency)
+    openai/
+      tts.ts                      # text → audio (tts-1)
     gmail/
       oauth.ts                    # code → tokens, refresh
       api.ts                      # users.messages.list / get
@@ -541,11 +544,13 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
   - `completeTodo({ id })` — client.
   - `pullGmailTodos({ since? })` — client: attaches Gmail access token, POSTs `/api/gmail/sync`, the server fetches recent emails and uses the LLM (`generateText` + `Output.object`) to return a small list of typed candidates.
 - **AI SDK gotchas** (per `ai-sdk` skill `references/common-errors.md`): use `inputSchema` not `parameters`; use `maxOutputTokens` not `maxTokens`; use `stopWhen: stepCountIs(n)` not `maxSteps`; use `toUIMessageStreamResponse()` / `createAgentUIStreamResponse({ uiMessages })`; on the client, manage input state with `useState` and call `sendMessage({ text })` (the old `input`/`handleInputChange`/`handleSubmit` are gone).
-- Voice flow:
-  1. User holds mic → `expo-audio` records to a file URI.
-  2. Release → upload to `/api/transcribe+api.ts` → OpenAI Whisper direct (Gateway does not proxy audio) → text.
-  3. Text → `useChat.sendMessage({ text })`.
-  4. Stream of assistant text is rendered live AND piped to `expo-speech.speak()`.
+- Voice flow (every hop is latency-optimized — see §13):
+  1. User holds mic → `expo-audio` records at **16kHz mono** (custom `RecordingOptions`, not the `HIGH_QUALITY` preset — uploads are ~4x smaller, no STT accuracy loss).
+  2. Release → upload to `/api/transcribe+api.ts` → **Groq `whisper-large-v3-turbo`** direct (~180-260ms round-trip, ~4-5x faster than OpenAI Whisper; Gateway does not proxy audio) → text.
+  3. Text → `useChat.sendMessage({ text })` → `google/gemini-3-flash` via AI Gateway (fast TTFT).
+  4. As tokens stream, `extractSentences` (`lib/infrastructure/sentence-stream.ts`) flushes **completed sentences** (hard breaks `.!?…\n` only — splitting on commas makes each chunk sound like its own statement) into `useSpeaker.speak()`.
+  5. `useSpeaker` enqueues each chunk and starts the `POST /api/speak` fetch **immediately**; `/api/speak` pipes OpenAI TTS's response body straight through (no `arrayBuffer()` buffering on the server). The client downloads, caches as mp3, plays via `createAudioPlayer`; the next chunk is already synthesizing in parallel. `expo-speech` is the per-chunk fallback on network failure.
+  6. `setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })` runs **once** at root mount — never re-called in the recording or playback hot paths.
 
 ---
 
@@ -614,9 +619,9 @@ All tokens are defined in `constants/theme.ts`. **Never inline literal colors, f
 
 ## 13. Voice input/output
 
-- Recording: `expo-audio` `useAudioRecorder({ extension: '.m4a', ... })`. Request `RecordingPresets.HIGH_QUALITY`. Always check + request mic permission via `requestRecordingPermissionsAsync()` before recording.
+- Recording: `expo-audio` `useAudioRecorder({ ... })` with a **custom 16kHz mono `RecordingOptions`** defined in `hooks/use-recorder.ts` (Whisper resamples to 16kHz internally — recording higher is wasted upload bytes). Do **not** use `RecordingPresets.HIGH_QUALITY` for speech. Always check + request mic permission via `requestRecordingPermissionsAsync()` before recording.
 - Press-and-hold UX: use `Gesture.LongPress()` from `react-native-gesture-handler` (or a Pressable with `onPressIn`/`onPressOut`) to start/stop recording. Provide haptic feedback via `lib/infrastructure/haptics.ts`.
-- TTS: `hooks/use-speaker.ts` is the only abstraction the UI talks to. It POSTs to `/api/speak` (OpenAI TTS), writes the returned mp3 into `Paths.cache` via `expo-file-system`, and plays it through `expo-audio`'s `createAudioPlayer`. If the network call fails, it falls back to `expo-speech` so the user still gets a reply. **To swap providers later, edit only `server/integrations/openai/tts.ts` (or add a sibling integration and re-export from `server/services/speech.service.ts`).** Do not branch on provider in the hook.
+- TTS: `hooks/use-speaker.ts` is the only abstraction the UI talks to. **The pipeline is built for low first-audio latency** — each spoken chunk's `POST /api/speak` fetch starts the moment a clause is flushed by `extractSentences`, runs in parallel with later chunks, and the server (`server/services/speech.service.ts`) streams OpenAI's mp3 body through without buffering. The client caches each chunk as a file via `expo-file-system` and plays them sequentially through `createAudioPlayer`; if the network call fails, it falls back to `expo-speech` per chunk so the user still gets a reply. **Never `await response.arrayBuffer()` on the server in `synthesizeSpeech`** — return `response.body` so first byte to client = first byte from OpenAI. **To swap providers later, edit only `server/integrations/openai/tts.ts` (or add a sibling integration and re-export from `server/services/speech.service.ts`).** Do not branch on provider in the hook.
 
 ## 13.1 Haptics
 

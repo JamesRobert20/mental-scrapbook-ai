@@ -1,4 +1,4 @@
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { createAudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
 import { useRef } from 'react';
 
@@ -50,8 +50,6 @@ export function useSpeaker() {
     drainingRef.current = true;
     stoppedRef.current = false;
     try {
-      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
-
       while (queueRef.current.length > 0 && !stoppedRef.current) {
         const item = queueRef.current.shift()!;
         try {

@@ -1,8 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 
+import MarkdownContent from '@/components/capture/markdown-content';
 import Text from '@/components/ui/text';
 import type { ChatAgentUIMessage } from '@/lib/ai/chat-types';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radii, Spacing } from '@/constants/theme';
 
 type Props = {
   messages: ChatAgentUIMessage[];
@@ -24,42 +25,51 @@ export default function TranscriptStream({ messages }: Props) {
 
   return (
     <View style={styles.wrap}>
-      {visible.map((message) => (
-        <View
-          key={message.id}
-          style={[styles.bubble, message.role === 'user' ? styles.user : styles.assistant]}>
-          <Text variant="body" selectable style={message.role === 'user' ? styles.userText : undefined}>
-            {messageText(message)}
-          </Text>
-        </View>
-      ))}
+      {visible.map((message) => {
+        const text = messageText(message);
+        if (message.role === 'user') {
+          return (
+            <View key={message.id} style={styles.userRow}>
+              <View style={styles.userBubble}>
+                <Text variant="body" selectable style={styles.userText}>
+                  {text}
+                </Text>
+              </View>
+            </View>
+          );
+        }
+
+        return (
+          <View key={message.id} style={styles.assistantRow}>
+            <MarkdownContent content={text} />
+          </View>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.screenPadding,
+    gap: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     marginBottom: Spacing.lg,
   },
-  bubble: {
-    padding: Spacing.md,
-    borderRadius: 16,
+  userRow: {
+    alignItems: 'flex-end',
+  },
+  userBubble: {
+    maxWidth: '88%',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.light.surfaceContainerHigh,
+    borderRadius: Radii.lg,
     borderCurve: 'continuous',
-    maxWidth: '92%',
-  },
-  user: {
-    alignSelf: 'flex-end',
-    backgroundColor: Colors.light.primary,
-  },
-  assistant: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.light.surface,
-    borderWidth: 1,
-    borderColor: Colors.light.outline,
   },
   userText: {
-    color: Colors.light.onPrimary,
+    color: Colors.light.onBackground,
+  },
+  assistantRow: {
+    width: '100%',
   },
 });

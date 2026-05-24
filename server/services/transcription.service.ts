@@ -1,4 +1,4 @@
-import { transcribeAudio } from '@/server/integrations/openai/whisper';
+import { transcribeAudio } from '@/server/integrations/groq/whisper';
 
 export async function handleTranscribeRequest(request: Request): Promise<Response> {
   // React Native's FormData type lacks .get; in the +api runtime we get the web FormData.

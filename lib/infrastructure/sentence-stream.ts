@@ -1,5 +1,6 @@
-// Pulls completed sentences off a growing text buffer.
-// Used to feed TTS chunk-by-chunk during a streaming LLM response.
+// Pulls completed sentences off a growing text buffer and feeds them to TTS.
+// We only break on hard sentence terminators (. ! ? … \n) — splitting on commas
+// makes each chunk get its own "end of sentence" intonation, which sounds robotic.
 
 const SENTENCE_REGEX = /[^.!?…\n]+(?:[.!?…]+|\n)/g;
 

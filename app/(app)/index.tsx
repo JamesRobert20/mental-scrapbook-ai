@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -49,9 +49,19 @@ export default function CaptureScreen() {
     };
   }, []);
 
+  const scrollRef = useRef<ScrollView>(null);
+
   const { messages, submitText, status: chatStatus } = useCaptureChat({
     onAssistantSentence: speak,
   });
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const id = requestAnimationFrame(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [messages]);
 
   async function handleSendText() {
     const trimmed = text.trim();
@@ -107,6 +117,7 @@ export default function CaptureScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : insets.top}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"

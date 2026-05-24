@@ -9,6 +9,7 @@ import {
   HankenGrotesk_500Medium,
   HankenGrotesk_600SemiBold,
 } from '@expo-google-fonts/hanken-grotesk';
+import { setAudioModeAsync } from 'expo-audio';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -43,6 +44,12 @@ export default function RootLayout() {
       void SplashScreen.hideAsync();
     }
   }, [fontsLoaded, authStatus]);
+
+  useEffect(() => {
+    // Default to playback-only so TTS plays through the loud speaker on iOS.
+    // The recorder flips allowsRecording: true only while the mic is held.
+    void setAudioModeAsync({ playsInSilentMode: true, allowsRecording: false });
+  }, []);
 
   if (!fontsLoaded || authStatus === 'bootstrapping') {
     return (
