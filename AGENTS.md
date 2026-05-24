@@ -177,110 +177,144 @@ There are **two halves** of the codebase: client (the device app) and server (th
 
 ```
 app/                              # routes ONLY. No co-located components, types, or utils.
-  _layout.tsx                     # providers (QueryClient, Theme, Fonts), auth gate
-  index.tsx                       # redirect based on auth status
-  (auth)/
+  _layout.tsx                     # QueryProvider + Stack + <NotificationBanner />; fonts, auth bootstrap, splash
+  index.tsx                       # redirect to (app) or (auth) based on useAuthStatus()
+  (auth)/                         # public auth group
     _layout.tsx
     sign-in.tsx
     sign-up.tsx
-  (app)/                          # authenticated tabs
-    _layout.tsx                   # custom pill tabBar (Insights | Capture | Profile)
+  (app)/                          # protected tabs — Redirect to sign-in if not authenticated
+    _layout.tsx                   # mounts useGmailAutoSync + useTodoReminders; custom pill tabBar
     index.tsx                     # Capture (default tab)
     insights.tsx
-    profile.tsx
-    settings/
+    profile/                      # profile tab + pushed sub-screens (stack)
       _layout.tsx
+      index.tsx                   # Profile root (avatar, settings sections)
       personal-info.tsx
-      security.tsx
-      notifications.tsx
+      notifications.tsx           # local reminders toggle
       language.tsx
-      sync-gmail.tsx
+      voice.tsx                   # TTS voice picker
+      sync-gmail.tsx              # Gmail connect / auto-scan toggle / scan now
   api/                            # Expo +api routes — THIN handlers; delegate to server/
     chat+api.ts                   # POST → server/services/chat.service
-    transcribe+api.ts             # POST → server/services/transcription.service
+    speak+api.ts                  # POST → server/services/speech.service (streams TTS)
+    transcribe+api.ts             # POST → server/services/transcription.service (Whisper on Groq)
     gmail/
-      callback+api.ts             # POST → server/integrations/gmail/oauth
-      sync+api.ts                 # POST → server/services/gmail.service
+      callback+api.ts             # POST → server/services/gmail.service.handleGmailCallback
+      refresh+api.ts              # POST → server/services/gmail.service.handleGmailRefresh
+      sync+api.ts                 # POST → server/services/gmail.service.handleGmailSyncRequest
 
 server/                           # SERVER-ONLY. Imported only by +api.ts files. See §1.1.
-  env.ts                          # validated process.env reader (server)
+  env.ts                          # zod-validated process.env reader
   ai/
-    gateway.ts                    # Vercel AI Gateway model resolver
-    prompts.ts                    # system prompts
-    agent.ts                      # tool definitions (schemas, descriptions) for streamText
-    runner.ts                     # runAgentTurn — invokes streamText with model+tools
+    agent.ts                      # ToolLoopAgent factory + ChatAgentUIMessage type
+    prompts.ts                    # re-exports buildSystemPrompt from lib/ai/prompts
   integrations/
-    openai/
+    gmail/
+      oauth.ts                    # exchangeAuthCode, refreshAccessToken
+      api.ts                      # listMessageIds, getMessageMetadata, fetchUserEmail
     groq/
       whisper.ts                  # audio → text (whisper-large-v3-turbo, low-latency)
     openai/
-      tts.ts                      # text → audio (tts-1)
-    gmail/
-      oauth.ts                    # code → tokens, refresh
-      api.ts                      # users.messages.list / get
+      tts.ts                      # text → mp3 stream (response.body passthrough)
   services/
-    chat.service.ts               # handleChatRequest — validate, run agent, return stream
+    chat.service.ts               # handleChatRequest — validate, stream UI message protocol
     transcription.service.ts      # transcribeAudio
-    gmail.service.ts              # exchangeCode, listRecentForUser, extractTodoCandidates
+    speech.service.ts             # synthesizeSpeech — pipes OpenAI TTS body to client
+    gmail.service.ts              # handleGmailCallback / Refresh / SyncRequest + extractTodoCandidates
 
 components/                       # reusable UI. Presentation layer only.
-  ui/                             # atoms (button, input, card, pill-tab-bar, glass-pane, pulse)
-  capture/                        # orb, mic-button, transcript-stream, tool-renderer
+  ui/                             # button, input, text, glass-pane, pill-tab-bar, notification-banner
+  capture/                        # capture-orb, mic-button, transcript-stream, voice-input-bar, markdown-content
   insights/                       # calendar-strip, schedule-timeline, priority-card, todo-chip, section-header
-  profile/                        # section-row, avatar
-  layout/                         # screen-shell, header
+  profile/                        # settings-section, settings-row, toggle-row
+  layout/                         # screen-header
 
 stores/                           # zustand stores (orchestration). See §6.
-  auth.store.ts
-  capture.store.ts
-  ui.store.ts
+  auth.store.ts                   # session + user, bootstrap status
+  capture.store.ts                # mic/recording/streaming state
+  insights.store.ts               # selected day key
+  preferences.store.ts            # speech voice, gmail auto-sync, notifications toggles
+  banner.store.ts                 # in-app notification banner queue
 
 hooks/                            # orchestration: react-query + small RN hooks.
-  queries/                        # useTodos, useCurrentUser, useGmailStatus
-  mutations/                      # useCreateTodo, useSyncGmail, useSignIn
-  use-recorder.ts                 # wraps expo-audio
-  use-speaker.ts                  # wraps expo-speech
+  queries/
+    use-todos.ts
+    use-insights-todos.ts         # derives important / schedule / general for a day
+    use-gmail-status.ts
+  mutations/
+    use-sign-in.ts
+    use-sign-up.ts
+    use-gmail-sync.ts             # runGmailSyncForCurrentUser → invalidate todos
   use-auth-bootstrap.ts
-  use-color-scheme.ts
+  use-capture-chat.ts             # wraps @ai-sdk/react useChat + client tool execution
+  use-recorder.ts                 # wraps expo-audio (16kHz mono RecordingOptions)
+  use-speaker.ts                  # /api/speak streaming + expo-audio playback (expo-speech fallback)
+  use-gmail-auto-sync.ts          # foreground polling + AppState + banner/notify on new high-priority todos
+  use-todo-reminders.ts           # schedules local notifications for upcoming scheduled todos
+  use-color-scheme.ts / .web.ts
 
-lib/                              # CLIENT + shared kernel
+lib/                              # CLIENT + shared kernel (also imported by server-side modules where noted)
+  ai/                             # shared by client (useChat tool execution) AND server (agent definition)
+    chat-types.ts                 # ChatAgentUIMessage re-export, tool name unions
+    prompts.ts                    # buildSystemPrompt(): SYSTEM_PROMPT with date/time/timezone
+    tools.ts                      # agentTools (createTodo, listTodos, completeTodo, pullGmailTodos)
+    voices.ts                     # SpeechVoiceId enum + DEFAULT_SPEECH_VOICE
+
   types/                          # shared errors, API response shapes
+    api.ts
+    errors.ts                     # AuthError, ValidationError, IntegrationError
+
   z/                              # zod schemas (validate at boundaries)
+    auth.ts
+    todo.ts                       # createTodoSchema (priority + dueAt ISO datetime, no category)
 
   models/                         # per-entity: row type, DTO, mapRowToDto
-    user.model.ts                 # UserRow, SessionUser, mapUserRow
-    todo.model.ts                 # TodoRow, Todo, mapTodoRow + enums
-    session.model.ts              # SessionRow
+    user.model.ts
+    session.model.ts
+    todo.model.ts                 # TodoRow, Todo, TodoPriority, TodoSource, mapTodoRow
+    gmail-token.model.ts          # GmailTokenRow, GmailConnection (email + lastSyncedAt + cursor)
 
   queries/                        # data access layer — pure DB queries, return Rows
     users.queries.ts
     sessions.queries.ts
     todos.queries.ts
-    gmail-tokens.queries.ts
+    gmail-tokens.queries.ts       # find / upsert / delete / updateGmailSyncCursor
 
   services/                       # client business logic — orchestrate queries, return DTOs
-    auth.service.ts               # signUp / signIn / signOut / bootstrapSession
-    todos.service.ts              # listTodosForCurrentUser, createTodoForCurrentUser, …
+    auth.service.ts               # signUp / signIn / signOut / bootstrapSession / getCurrentUser
+    todos.service.ts              # listTodosForCurrentUser / createTodoForCurrentUser / completeTodoForCurrentUser
+    gmail.service.ts              # exchange/persist/disconnect, syncGmailTodos, runGmailSyncForCurrentUser
 
-  db/
-    client.ts                     # Drizzle + expo-sqlite singleton (infrastructure)
-    schema.ts                     # Drizzle table defs
-    migrations/                   # generated by drizzle-kit
+  db/                             # device SQLite only — NEVER imported from server/
+    client.ts                     # openDatabaseSync + IF NOT EXISTS DDL + drizzle()
+    schema.ts                     # users, sessions, todos, gmail_tokens
 
-  infrastructure/
-    secure-store.ts               # thin typed wrapper over expo-secure-store
-    crypto.ts                     # password hashing primitives (pure JS)
-    api-client.ts                 # fetch('/api/...') + auth header — used by hooks only
-    id.ts                         # createId, createSessionToken
+  infrastructure/                 # leaf utilities; no React, no business rules
+    api-client.ts                 # fetch('/api/...') + auth header (consumed by hooks)
+    api-url.ts                    # apiUrl('/api/...') — derives host from Constants.experienceUrl
+    crypto.ts                     # bcryptjs hashing (Expo Go safe)
+    date-keys.ts                  # dayKey(), hasScheduledTime(), formatTimeLabel()
+    haptics.ts                    # tap(tone) — single entry point over expo-haptics
+    id.ts                         # createId(), createSessionToken()
+    notifications.ts              # expo-notifications wrapper (permission, instant, schedule, cancel)
+    polyfills.ts                  # structuredClone + TextEncoder/DecoderStream for AI SDK streaming
+    secure-store.ts               # typed expo-secure-store wrapper (session + Gmail tokens)
+    sentence-stream.ts            # extractSentences() — clause flusher for TTS chunking
+    speech.ts                     # client-side TTS helpers consumed by useSpeaker
+    transcribe.ts                 # client-side STT upload helper consumed by useRecorder
 
   navigation/
-    routes.ts                     # typed Href constants
+    routes.ts                     # typed Href constants (Routes.signIn, Routes.settings.syncGmail, …)
 
   providers/
-    query-provider.tsx            # QueryClientProvider
+    query-provider.tsx            # QueryClientProvider (single client instance)
 
 constants/
-  theme.ts                        # tokens — single source of truth for colors/typography/spacing
+  theme.ts                        # Colors, Spacing, Radii, Typography, Shadows — single source of truth
+
+types/
+  ambient-modules.d.ts            # declare module shims for untyped deps
 
 assets/                           # images, splash, icons
 ```
@@ -410,10 +444,10 @@ If you're about to type `// ` and the code below it is obvious from its identifi
 
 ## 5. Routing & auth gate
 
-- Root `_layout.tsx` wraps the tree in `<QueryClientProvider>`, `<ThemeProvider>`, font loading.
-- The gate is `Stack.Protected` (Expo Router v6) keyed on `useAuth()` from `stores/auth.ts`. While bootstrapping the session, render a splash.
-- `(app)/_layout.tsx` renders `<Tabs>` with a custom `tabBar` prop pointing at `components/ui/pill-tab-bar.tsx`. Order: Insights (left), Capture (center), Profile (right). Capture is `index.tsx`.
-- Settings sub-screens are pushed as a stack from Profile via per-row Links.
+- Root `_layout.tsx` loads fonts, runs `useAuthBootstrap()`, and renders a splash until both finish. It hosts `<QueryProvider>`, the root `<Stack>`, and the top-of-app `<NotificationBanner />`.
+- The gate is a `<Redirect href={Routes.signIn} />` inside `(app)/_layout.tsx`, keyed on `useAuthStatus()` from `stores/auth.store.ts`. The `(app)` group is the protected boundary; `(auth)` is public.
+- `(app)/_layout.tsx` mounts `useGmailAutoSync()` and `useTodoReminders()` (foreground-only, see §11.1), then renders `<Tabs>` with a custom `tabBar` prop pointing at `components/ui/pill-tab-bar.tsx`. Order: Insights (left), Capture (center), Profile (right). Capture is `index.tsx`.
+- Profile sub-screens live under `app/(app)/profile/**` (`personal-info`, `notifications`, `language`, `voice`, `sync-gmail`) and are pushed as a stack from `profile/index.tsx` via per-row Links. There is no separate `settings/` group.
 
 ---
 
@@ -508,12 +542,16 @@ export function useTodos() {
 
 - One DB file: `mental_scrapbook.db`, opened once in `lib/db/client.ts` via `openDatabaseSync`.
 - Drizzle for type-safe queries. Schemas in `lib/db/schema.ts`.
-- Migrations: use `drizzle-kit generate` and apply on app boot via `useMigrations()` from `drizzle-orm/expo-sqlite/migrator`.
-- Tables (initial):
+- **Migrations (hackathon scope):** `client.ts` runs idempotent `CREATE TABLE IF NOT EXISTS` DDL at boot, plus a small set of `ALTER TABLE … ADD/DROP COLUMN` blocks wrapped in try/catch for in-place upgrades on existing installs. When the schema stabilizes, swap to `drizzle-kit generate` + `useMigrations()` from `drizzle-orm/expo-sqlite/migrator`.
+- **Categorization is derived, not stored.** A todo's bucket on the Insights screen is computed in `use-insights-todos.ts` from `priority` and `hasScheduledTime(dueAt)`:
+    - `important` ← `priority === 'high'`
+    - `schedule` ← `hasScheduledTime(dueAt)` (sorted chronologically)
+    - `general` ← everything else
+- Tables:
     - `users` — `id`, `email`, `password_hash`, `first_name`, `last_name`, `created_at`
     - `sessions` — `token`, `user_id`, `expires_at`
-    - `todos` — `id`, `user_id`, `title`, `notes`, `due_at`, `priority`, `category` (important | schedule | general), `time_label`, `source` (manual | voice | gmail), `created_at`, `completed_at`
-    - `gmail_tokens` — `user_id`, `access_token`, `refresh_token`, `expires_at`, `email`
+    - `todos` — `id`, `user_id`, `title`, `notes`, `due_at` (full ISO datetime with offset when scheduled), `priority` (low | medium | high), `source` (manual | voice | gmail), `created_at`, `completed_at`
+    - `gmail_tokens` — `user_id`, `access_token`, `refresh_token`, `expires_at`, `email`, `last_synced_at`, `last_seen_message_id` (server-side dedupe cursor — see §11.1)
 
 ---
 
@@ -538,11 +576,11 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 - **Tool execution split** (device SQLite is unreachable from the server, and Gmail tokens live in secure-store):
     - **Client tools** (defined with NO `execute` on the server): `createTodo`, `completeTodo`, `listTodos`, `pullGmailTodos`. The client's `useChat` handles them via `onToolCall` and calls either `lib/services/todos.service.ts` (SQLite) or `POST /api/gmail/sync` with the Gmail access token from secure-store.
     - **Server tools** (full `execute` on the server): none yet. `renderUi({ kind, props })` will be added as a server tool returning a typed UI descriptor (discriminated union in `lib/z`) for the client to render inline.
-- Tools (initial):
-    - `createTodo({ title, notes?, dueAt?, priority?, category, timeLabel? })` — client.
-    - `listTodos({ category? })` — client.
+- Tools (current — see `lib/ai/tools.ts`):
+    - `createTodo({ title, notes?, dueAt?, priority? })` — client. `dueAt` is a full ISO datetime (with offset) when the user mentions a time; `priority` is `'high'` only for genuinely important items. No `category` — bucketing is derived (§8).
+    - `listTodos({})` — client. Returns the user's open todos.
     - `completeTodo({ id })` — client.
-    - `pullGmailTodos({ since? })` — client: attaches Gmail access token, POSTs `/api/gmail/sync`, the server fetches recent emails and uses the LLM (`generateText` + `Output.object`) to return a small list of typed candidates.
+    - `pullGmailTodos({ since? })` — client: calls `runGmailSyncForCurrentUser` which attaches the Gmail access token, POSTs `/api/gmail/sync`, dedupes against existing todos, and writes the survivors via `todos.service`. The server uses `generateText` + `Output.object` and is strict about only returning **actionable** emails.
 - **AI SDK gotchas** (per `ai-sdk` skill `references/common-errors.md`): use `inputSchema` not `parameters`; use `maxOutputTokens` not `maxTokens`; use `stopWhen: stepCountIs(n)` not `maxSteps`; use `toUIMessageStreamResponse()` / `createAgentUIStreamResponse({ uiMessages })`; on the client, manage input state with `useState` and call `sendMessage({ text })` (the old `input`/`handleInputChange`/`handleSubmit` are gone).
 - Voice flow (every hop is latency-optimized — see §13):
     1. User holds mic → `expo-audio` records at **16kHz mono** (custom `RecordingOptions`, not the `HIGH_QUALITY` preset — uploads are ~4x smaller, no STT accuracy loss).
@@ -563,7 +601,7 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 3. **OAuth consent screen** → External, fill app name + support email, **add scope** `https://www.googleapis.com/auth/gmail.readonly`. Stay in **Testing** mode (no Google verification required for ≤100 listed test users — fine for hackathon).
 4. **Credentials → Create OAuth client ID** → **Web application** (because `expo-auth-session` uses an HTTPS proxy redirect URI on Expo Go). Add the proxy redirect: `https://auth.expo.io/@<your-expo-username>/<slug>`. Copy `client_id` and `client_secret` into `.env`.
 
-**Client flow (device, `app/(app)/settings/sync-gmail.tsx`):**
+**Client flow (device, `app/(app)/profile/sync-gmail.tsx`):**
 
 - Use `expo-auth-session/providers/google` `Google.useAuthRequest`:
     ```ts
@@ -582,7 +620,7 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 
 - `/api/gmail/callback` → `server/services/gmail.service.handleGmailCallback` → `server/integrations/gmail/oauth.exchangeAuthCode` → fetches `userinfo` for the email.
 - `/api/gmail/sync` (`Authorization: Bearer <gmailAccessToken>`) → `extractTodoCandidates`:
-    1. `listMessageIds(token, 'newer_than:7d -category:promotions -category:social', 15)`.
+    1. `listMessageIds(token, 'newer_than:7d -category:promotions -category:social -category:updates', 15)`. Strips marketing, social, and shipping/order notifications so the LLM only sees plausible action items.
     2. `getMessageMetadata` for each (uses `format=metadata` + `metadataHeaders=Subject|From|Date` — no email body fetched, lighter quota).
     3. Pass subjects + snippets into `generateText({ model, output: Output.object(...) })` to extract typed todo candidates.
 

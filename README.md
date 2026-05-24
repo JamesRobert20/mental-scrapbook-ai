@@ -19,7 +19,7 @@ pnpm install
 pnpm start
 ```
 
-Scan the QR code with Expo Go.
+Install [Expo Go](https://expo.dev/go) on your phone, then scan the QR code with your device's camera (iOS) or the Expo Go app (Android). It will open the project in Expo Go.
 
 ### Physical device + API routes
 
@@ -31,12 +31,15 @@ pnpm start --tunnel
 
 ## Scripts
 
-| Command               | Description                              |
-| --------------------- | ---------------------------------------- |
-| `pnpm start`          | Expo dev server (Metro)                  |
-| `pnpm start --tunnel` | Dev server with tunnel (device + `/api`) |
-| `pnpm typecheck`      | TypeScript check                         |
-| `pnpm lint`           | ESLint                                   |
+| Command               | Description                                           |
+| --------------------- | ----------------------------------------------------- |
+| `pnpm start`          | Expo dev server (Metro)                               |
+| `pnpm start --tunnel` | Dev server with tunnel (device + `/api`)              |
+| `pnpm typecheck`      | TypeScript check (`tsc --noEmit`)                     |
+| `pnpm lint`           | ESLint (includes Prettier rules)                      |
+| `pnpm format`         | Write Prettier formatting across the repo             |
+| `pnpm format:check`   | Verify Prettier formatting without writing            |
+| `pnpm rtc`            | Pre-commit shorthand: `format` → `lint` → `typecheck` |
 
 ## Environment variables
 
