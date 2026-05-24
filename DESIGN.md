@@ -23,57 +23,57 @@ All colors are defined in `Colors.light` in `constants/theme.ts`. **Never inline
 
 ### Neutrals (the page)
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `background` | `#faf9f7` | The paper. Root of every screen. Slight warmth — never `#fff`. |
-| `surface` | `#ffffff` | Cards, input fields, the tab bar pill, settings rows. Sits on `background`. |
-| `surfaceContainer` | `#efeeec` | Quiet wells — icon bubbles, perk row icons, search fields. |
-| `surfaceContainerHigh` | `#e9e8e6` | Slightly louder fills — chat user bubble, profile avatar, section badges. |
+| Token                  | Hex       | Use                                                                         |
+| ---------------------- | --------- | --------------------------------------------------------------------------- |
+| `background`           | `#faf9f7` | The paper. Root of every screen. Slight warmth — never `#fff`.              |
+| `surface`              | `#ffffff` | Cards, input fields, the tab bar pill, settings rows. Sits on `background`. |
+| `surfaceContainer`     | `#efeeec` | Quiet wells — icon bubbles, perk row icons, search fields.                  |
+| `surfaceContainerHigh` | `#e9e8e6` | Slightly louder fills — chat user bubble, profile avatar, section badges.   |
 
 ### Ink
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `onBackground` / `onSurface` | `#1a1c1b` | Primary text. Headlines, body, button labels on light fills. |
-| `onSurfaceVariant` | `#474741` | Muted text — captions, helper copy, inactive icons, "muted" prop on `<Text>`. |
-| `outline` | `#c8c7bf` | All borders by default. 1px hairline on cards, inputs, day cells. |
-| `outlineStrong` | `#777770` | Reserved — use when `outline` disappears against a colored fill. |
+| Token                        | Hex       | Use                                                                           |
+| ---------------------------- | --------- | ----------------------------------------------------------------------------- |
+| `onBackground` / `onSurface` | `#1a1c1b` | Primary text. Headlines, body, button labels on light fills.                  |
+| `onSurfaceVariant`           | `#474741` | Muted text — captions, helper copy, inactive icons, "muted" prop on `<Text>`. |
+| `outline`                    | `#c8c7bf` | All borders by default. 1px hairline on cards, inputs, day cells.             |
+| `outlineStrong`              | `#777770` | Reserved — use when `outline` disappears against a colored fill.              |
 
 ### Primary (ink + voice)
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `primary` | `#181916` | Filled buttons, active tab pill, selected calendar day, check badges. The "ink" CTA color. |
-| `onPrimary` | `#ffffff` | Text/icons on `primary` fills. |
-| `primaryContainer` | `#2d2d2a` | Tonal step for elements that need to read primary-adjacent without going full black. |
-| `inverseSurface` | `#2f3130` | Reserved for inverted/dark transient surfaces (toasts, overlays — not used yet). |
-| `inverseOnSurface` | `#f1f1ef` | Text on `inverseSurface`. |
+| Token              | Hex       | Use                                                                                        |
+| ------------------ | --------- | ------------------------------------------------------------------------------------------ |
+| `primary`          | `#181916` | Filled buttons, active tab pill, selected calendar day, check badges. The "ink" CTA color. |
+| `onPrimary`        | `#ffffff` | Text/icons on `primary` fills.                                                             |
+| `primaryContainer` | `#2d2d2a` | Tonal step for elements that need to read primary-adjacent without going full black.       |
+| `inverseSurface`   | `#2f3130` | Reserved for inverted/dark transient surfaces (toasts, overlays — not used yet).           |
+| `inverseOnSurface` | `#f1f1ef` | Text on `inverseSurface`.                                                                  |
 
 ### Accent triad (the only colors)
 
 Soft, dusty pastels. Use them **as a single dot, small chip, or thin accent** — never as a card fill, never as a CTA.
 
-| Token | Hex | When |
-| --- | --- | --- |
-| `accentSage` | `#98a895` | Voice "thinking" pulse, neutral chips, calm confirmations. |
+| Token            | Hex       | When                                                                  |
+| ---------------- | --------- | --------------------------------------------------------------------- |
+| `accentSage`     | `#98a895` | Voice "thinking" pulse, neutral chips, calm confirmations.            |
 | `accentLavender` | `#a7a5c6` | General-todo chip dots, mic idle halo. The default decorative accent. |
-| `accentBlue` | `#9bb2c0` | Voice "speaking" pulse, sync/connection visuals, orb glow. |
+| `accentBlue`     | `#9bb2c0` | Voice "speaking" pulse, sync/connection visuals, orb glow.            |
 
 The accents rotate through the **Pulse** indicator during AI streaming — sage → lavender → blue. This is the only place all three appear together.
 
 ### Status
 
-| Token | Hex | Use |
-| --- | --- | --- |
+| Token   | Hex       | Use                                                                                                                                    |
+| ------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `error` | `#ba1a1a` | Destructive labels (Sign Out, Disconnect tone), error banners, the left accent bar on **Important** todos. The only red in the system. |
 
 ### Specials
 
-| Token | Use |
-| --- | --- |
+| Token                             | Use                                                        |
+| --------------------------------- | ---------------------------------------------------------- |
 | `glass` (`rgba(255,255,255,0.7)`) | Tint base for `<BlurView>` panes (orb stage, glass cards). |
-| `tabActive` / `tabInactive` | Resolved against the pill tab bar — don't reuse elsewhere. |
-| `signUpHero` / `signUpCard` | Reserved for the auth experience. |
+| `tabActive` / `tabInactive`       | Resolved against the pill tab bar — don't reuse elsewhere. |
+| `signUpHero` / `signUpCard`       | Reserved for the auth experience.                          |
 
 ### Color rules
 
@@ -95,15 +95,15 @@ Two families, loaded once in the root layout:
 
 Use the `<Text variant="…">` prop. Never set `fontSize`/`fontFamily` directly in a component.
 
-| Variant | Family / weight | Size / line | Use |
-| --- | --- | --- | --- |
-| `display` | Playfair 600 SemiBold | 32 / 38, -0.5 tracking | The screen brand wordmark ("Mental Scrapbook"). One per screen. |
-| `headline` | Playfair 500 Medium | 24 / 32 | Page titles, screen hero titles, profile name. |
-| `title` | Playfair 500 Medium | 20 / 28 | Section headers (Important, Schedule, General). |
-| `body` | Hanken 400 Regular | 16 / 26 | Default copy. Cards, settings rows, chat bubbles. |
-| `bodySmall` | Hanken 400 Regular | 14 / 20 | Helper copy, captions, "muted" body, error banners. |
-| `label` | Hanken 500 Medium | 12 / 16, +0.6 tracking, UPPERCASE | Calendar weekday, settings section title, small metadata labels. |
-| `button` | Hanken 600 SemiBold | 14 / 18, +1.2 tracking, UPPERCASE | All button labels. Never use anywhere else. |
+| Variant     | Family / weight       | Size / line                       | Use                                                              |
+| ----------- | --------------------- | --------------------------------- | ---------------------------------------------------------------- |
+| `display`   | Playfair 600 SemiBold | 32 / 38, -0.5 tracking            | The screen brand wordmark ("Mental Scrapbook"). One per screen.  |
+| `headline`  | Playfair 500 Medium   | 24 / 32                           | Page titles, screen hero titles, profile name.                   |
+| `title`     | Playfair 500 Medium   | 20 / 28                           | Section headers (Important, Schedule, General).                  |
+| `body`      | Hanken 400 Regular    | 16 / 26                           | Default copy. Cards, settings rows, chat bubbles.                |
+| `bodySmall` | Hanken 400 Regular    | 14 / 20                           | Helper copy, captions, "muted" body, error banners.              |
+| `label`     | Hanken 500 Medium     | 12 / 16, +0.6 tracking, UPPERCASE | Calendar weekday, settings section title, small metadata labels. |
+| `button`    | Hanken 600 SemiBold   | 14 / 18, +1.2 tracking, UPPERCASE | All button labels. Never use anywhere else.                      |
 
 ### Type rules
 
@@ -158,8 +158,8 @@ We don't drop shadows. We use:
 
 ```ts
 Shadows = {
-  ambient: '0 12px 40px rgba(20, 20, 20, 0.04)',
-  orb:     '0 24px 64px rgba(155, 178, 192, 0.25)',
+    ambient: '0 12px 40px rgba(20, 20, 20, 0.04)',
+    orb: '0 24px 64px rgba(155, 178, 192, 0.25)'
 }
 ```
 
@@ -195,14 +195,14 @@ If a card needs more separation, add a **1px `outline` border** — don't crank 
 
 Polish, never required. Use only `tap(tone)`:
 
-| Tone | When |
-| --- | --- |
-| `light` | Text send, secondary tap, mic release. |
-| `medium` | Primary CTA press, mic press-in. |
+| Tone        | When                                           |
+| ----------- | ---------------------------------------------- |
+| `light`     | Text send, secondary tap, mic release.         |
+| `medium`    | Primary CTA press, mic press-in.               |
 | `selection` | Tab switch, settings row, calendar day select. |
-| `success` | Sign-in success, action confirmed. |
-| `warning` | Destructive intent (Sign Out before confirm). |
-| `error` | Request failure, mic failure. |
+| `success`   | Sign-in success, action confirmed.             |
+| `warning`   | Destructive intent (Sign Out before confirm).  |
+| `error`     | Request failure, mic failure.                  |
 
 Never `await` it. Never throw from it.
 
@@ -270,9 +270,9 @@ All primitives live in `components/ui/**`. Composed pieces live in feature folde
 - Tab root: avatar (96px `surfaceContainerHigh` circle, initial in `headline`), name, muted streak line, then `SettingsSection`s grouped by **Account → Preferences → Session**.
 - Sub-screens are pushed onto a profile stack with the native back button. Each starts with a single muted intro `bodySmall`, then content. No tab bar visible on sub-screens.
 - **Connection screens** (Sync Gmail) follow a three-part pattern:
-  1. Hero block — circular icon bubble, headline, one-line muted body. Headline swaps between disconnected / connected.
-  2. Content card — perks list (disconnected) or status card with check badge + email (connected).
-  3. Single CTA — `Connect …` / `Disconnect …` with progress label.
+    1. Hero block — circular icon bubble, headline, one-line muted body. Headline swaps between disconnected / connected.
+    2. Content card — perks list (disconnected) or status card with check badge + email (connected).
+    3. Single CTA — `Connect …` / `Disconnect …` with progress label.
 
 ### Tab bar
 

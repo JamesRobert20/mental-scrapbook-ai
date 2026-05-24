@@ -1,14 +1,14 @@
-import { Redirect } from 'expo-router';
+import { Redirect } from 'expo-router'
 
-import { Routes } from '@/lib/navigation/routes';
-import { useAuthStatus } from '@/stores/auth.store';
+import { Routes } from '@/lib/navigation/routes'
+import { useAuthStatus } from '@/stores/auth.store'
 
 export default function Index() {
-  const status = useAuthStatus();
+    const status = useAuthStatus()
 
-  if (status === 'authenticated') {
-    return <Redirect href={Routes.home} />;
-  }
+    if (status === 'authenticated') {
+        return <Redirect href={Routes.home} />
+    }
 
-  return <Redirect href={Routes.signIn} />;
+    return <Redirect href={Routes.signIn} />
 }

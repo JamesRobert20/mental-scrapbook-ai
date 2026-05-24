@@ -31,12 +31,12 @@ pnpm start --tunnel
 
 ## Scripts
 
-| Command | Description |
-| ------- | ----------- |
-| `pnpm start` | Expo dev server (Metro) |
+| Command               | Description                              |
+| --------------------- | ---------------------------------------- |
+| `pnpm start`          | Expo dev server (Metro)                  |
 | `pnpm start --tunnel` | Dev server with tunnel (device + `/api`) |
-| `pnpm typecheck` | TypeScript check |
-| `pnpm lint` | ESLint |
+| `pnpm typecheck`      | TypeScript check                         |
+| `pnpm lint`           | ESLint                                   |
 
 ## Environment variables
 
@@ -54,14 +54,14 @@ GOOGLE_OAUTH_CLIENT_SECRET=...
 EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID=...
 ```
 
-| Variable | Purpose |
-| -------- | ------- |
-| `AI_GATEWAY_API_KEY` | [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) — chat models |
-| `GROQ_API_KEY` | [Groq](https://console.groq.com/keys) — Whisper Large v3 Turbo (low-latency STT) |
-| `OPENAI_API_KEY` | OpenAI direct — TTS (`/api/speak`) |
-| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth (server token exchange) |
-| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth (server only) |
-| `EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID` | Same client ID, exposed to `expo-auth-session` on device |
+| Variable                             | Purpose                                                                          |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| `AI_GATEWAY_API_KEY`                 | [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) — chat models            |
+| `GROQ_API_KEY`                       | [Groq](https://console.groq.com/keys) — Whisper Large v3 Turbo (low-latency STT) |
+| `OPENAI_API_KEY`                     | OpenAI direct — TTS (`/api/speak`)                                               |
+| `GOOGLE_OAUTH_CLIENT_ID`             | Google OAuth (server token exchange)                                             |
+| `GOOGLE_OAUTH_CLIENT_SECRET`         | Google OAuth (server only)                                                       |
+| `EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID` | Same client ID, exposed to `expo-auth-session` on device                         |
 
 Optional: set `AI_GATEWAY_CHAT_MODEL` to override the default chat model (e.g. `anthropic/claude-sonnet-4.5`). List models: `curl https://ai-gateway.vercel.sh/v1/models`.
 

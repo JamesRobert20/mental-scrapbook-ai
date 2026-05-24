@@ -1,19 +1,19 @@
-import { useEffect, useState } from 'react';
-import { useColorScheme as useRNColorScheme } from 'react-native';
+import { useEffect, useState } from 'react'
+import { useColorScheme as useRNColorScheme } from 'react-native'
 
 // Web static rendering hydrates with no DOM, so recompute after mount.
 export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
+    const [hasHydrated, setHasHydrated] = useState(false)
 
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
+    useEffect(() => {
+        setHasHydrated(true)
+    }, [])
 
-  const colorScheme = useRNColorScheme();
+    const colorScheme = useRNColorScheme()
 
-  if (hasHydrated) {
-    return colorScheme;
-  }
+    if (hasHydrated) {
+        return colorScheme
+    }
 
-  return 'light';
+    return 'light'
 }

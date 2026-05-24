@@ -1,11 +1,11 @@
-import { drizzle } from 'drizzle-orm/expo-sqlite';
-import { openDatabaseSync } from 'expo-sqlite';
+import { drizzle } from 'drizzle-orm/expo-sqlite'
+import { openDatabaseSync } from 'expo-sqlite'
 
-import * as schema from '@/lib/db/schema';
+import * as schema from '@/lib/db/schema'
 
-const DB_NAME = 'mental_scrapbook.db';
+const DB_NAME = 'mental_scrapbook.db'
 
-const expoDb = openDatabaseSync(DB_NAME);
+const expoDb = openDatabaseSync(DB_NAME)
 
 expoDb.execSync(`
   PRAGMA journal_mode = WAL;
@@ -29,8 +29,6 @@ expoDb.execSync(`
     notes TEXT,
     due_at TEXT,
     priority TEXT NOT NULL,
-    category TEXT NOT NULL,
-    time_label TEXT,
     source TEXT NOT NULL,
     created_at TEXT NOT NULL,
     completed_at TEXT
@@ -42,6 +40,14 @@ expoDb.execSync(`
     expires_at TEXT NOT NULL,
     email TEXT NOT NULL
   );
-`);
+`)
 
-export const db = drizzle(expoDb, { schema });
+for (const column of ['category', 'time_label']) {
+    try {
+        expoDb.execSync(`ALTER TABLE todos DROP COLUMN ${column};`)
+    } catch {
+        // column already absent on fresh installs
+    }
+}
+
+export const db = drizzle(expoDb, { schema })

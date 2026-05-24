@@ -14,28 +14,28 @@ Product overview, install, env template, and run commands: **[README.md](./READM
 
 ## 1. Stack (canonical)
 
-| Concern              | Choice                                                          | Notes                                                                 |
-| -------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Runtime              | Expo SDK 54, React 19, RN 0.81, New Architecture ON             | Versioned docs: https://docs.expo.dev/versions/v54.0.0/               |
-| React Compiler       | **ON** (`app.json` → `experiments.reactCompiler`)               | Do not hand-memo by default — see §4.1                                |
-| Router               | `expo-router` (file-based, typed routes)                        | JS `Tabs` (custom pill tabBar), not NativeTabs (design is custom)     |
-| State (client)       | `zustand`                                                       | Strict pattern — see §4                                               |
-| Server state / cache | `@tanstack/react-query`                                         | Wrap all async data in queries/mutations                              |
-| Backend              | **Expo Router `+api` routes only** (`app/api/**/+api.ts`)       | No Express, Next.js, Supabase, or separate Node service — see §1.1    |
-| DB                   | `expo-sqlite` on device + Drizzle ORM                           | Users, sessions, todos — **client-only**; `+api` routes do not open this DB |
-| Secrets / session    | `expo-secure-store`                                             | Auth tokens, OAuth refresh tokens, Gmail tokens                       |
-| Auth                 | Local email+password (SQLite + secure-store)                    | Hackathon scope — auth lives entirely on device, see §9               |
-| AI                   | Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/openai`)         | Tool-calling agent on the server route, `useChat` on client           |
-| Voice in             | `expo-audio` (record) → server STT (Whisper Large v3 Turbo on Groq) | NOT `expo-av` (deprecated); Groq is ~4-5x faster than OpenAI Whisper |
-| Voice out            | OpenAI TTS via `/api/speak` → `expo-audio` playback             | `expo-speech` is the offline fallback when the network call fails     |
-| OAuth (Gmail)        | `expo-auth-session` + `expo-web-browser`                        | Google OAuth via auth code → exchange on API route                    |
-| Styling              | `StyleSheet.create` + design tokens from `constants/theme.ts`   | No CSS, no Tailwind                                                   |
-| Fonts                | `@expo-google-fonts/playfair-display`, `…/hanken-grotesk`       | Loaded once in root `_layout`                                         |
-| Blur / glass         | `expo-blur` `<BlurView>`                                        | NOT `expo-glass-effect` (requires iOS 26 custom build)                |
-| Gradients            | `expo-linear-gradient`                                          | For the orb glow + card accents                                       |
-| Vector / shapes      | `react-native-svg`                                              | The "Pulse" indicator, organic shapes                                 |
-| Images               | `expo-image`                                                    | Never `<Image>` from `react-native`, never `<img>`                    |
-| Haptics              | `expo-haptics`                                                  | Conditional on iOS for delight                                        |
+| Concern              | Choice                                                              | Notes                                                                       |
+| -------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Runtime              | Expo SDK 54, React 19, RN 0.81, New Architecture ON                 | Versioned docs: https://docs.expo.dev/versions/v54.0.0/                     |
+| React Compiler       | **ON** (`app.json` → `experiments.reactCompiler`)                   | Do not hand-memo by default — see §4.1                                      |
+| Router               | `expo-router` (file-based, typed routes)                            | JS `Tabs` (custom pill tabBar), not NativeTabs (design is custom)           |
+| State (client)       | `zustand`                                                           | Strict pattern — see §4                                                     |
+| Server state / cache | `@tanstack/react-query`                                             | Wrap all async data in queries/mutations                                    |
+| Backend              | **Expo Router `+api` routes only** (`app/api/**/+api.ts`)           | No Express, Next.js, Supabase, or separate Node service — see §1.1          |
+| DB                   | `expo-sqlite` on device + Drizzle ORM                               | Users, sessions, todos — **client-only**; `+api` routes do not open this DB |
+| Secrets / session    | `expo-secure-store`                                                 | Auth tokens, OAuth refresh tokens, Gmail tokens                             |
+| Auth                 | Local email+password (SQLite + secure-store)                        | Hackathon scope — auth lives entirely on device, see §9                     |
+| AI                   | Vercel AI SDK (`ai`, `@ai-sdk/react`, `@ai-sdk/openai`)             | Tool-calling agent on the server route, `useChat` on client                 |
+| Voice in             | `expo-audio` (record) → server STT (Whisper Large v3 Turbo on Groq) | NOT `expo-av` (deprecated); Groq is ~4-5x faster than OpenAI Whisper        |
+| Voice out            | OpenAI TTS via `/api/speak` → `expo-audio` playback                 | `expo-speech` is the offline fallback when the network call fails           |
+| OAuth (Gmail)        | `expo-auth-session` + `expo-web-browser`                            | Google OAuth via auth code → exchange on API route                          |
+| Styling              | `StyleSheet.create` + design tokens from `constants/theme.ts`       | No CSS, no Tailwind                                                         |
+| Fonts                | `@expo-google-fonts/playfair-display`, `…/hanken-grotesk`           | Loaded once in root `_layout`                                               |
+| Blur / glass         | `expo-blur` `<BlurView>`                                            | NOT `expo-glass-effect` (requires iOS 26 custom build)                      |
+| Gradients            | `expo-linear-gradient`                                              | For the orb glow + card accents                                             |
+| Vector / shapes      | `react-native-svg`                                                  | The "Pulse" indicator, organic shapes                                       |
+| Images               | `expo-image`                                                        | Never `<Image>` from `react-native`, never `<img>`                          |
+| Haptics              | `expo-haptics`                                                      | Conditional on iOS for delight                                              |
 
 ### Expo Go compatibility is non-negotiable
 
@@ -73,15 +73,15 @@ app/api/auth/sign-in+api.ts  →  POST /api/auth/sign-in   (only if that endpoin
 
 **What runs on `+api` vs on the device**
 
-| Concern | Where it runs | Why |
-| -------- | ------------- | --- |
-| OpenAI chat / tool loop (streaming) | `app/api/chat+api.ts` | API key must stay server-side |
-| Whisper transcription | `app/api/transcribe+api.ts` | Calls Groq (not AI Gateway — Gateway doesn't proxy audio) |
-| Gmail OAuth code → tokens | `app/api/gmail/callback+api.ts` | Client secret |
-| Gmail REST fetch + parse emails | `app/api/gmail/sync+api.ts` | Access token handling |
-| Users, sessions, todos CRUD | **Client** (`lib/services` → repos → expo-sqlite) | DB file lives on the phone in Expo Go |
-| Password hash / sign-in | **Client** (hackathon) | Same SQLite; upgrade path uses `+api` if we add a hosted DB later |
-| Persisting todos after agent tool calls | **Client** | Server streams tool calls; client executes tools against `todos.service` |
+| Concern                                 | Where it runs                                     | Why                                                                      |
+| --------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
+| OpenAI chat / tool loop (streaming)     | `app/api/chat+api.ts`                             | API key must stay server-side                                            |
+| Whisper transcription                   | `app/api/transcribe+api.ts`                       | Calls Groq (not AI Gateway — Gateway doesn't proxy audio)                |
+| Gmail OAuth code → tokens               | `app/api/gmail/callback+api.ts`                   | Client secret                                                            |
+| Gmail REST fetch + parse emails         | `app/api/gmail/sync+api.ts`                       | Access token handling                                                    |
+| Users, sessions, todos CRUD             | **Client** (`lib/services` → repos → expo-sqlite) | DB file lives on the phone in Expo Go                                    |
+| Password hash / sign-in                 | **Client** (hackathon)                            | Same SQLite; upgrade path uses `+api` if we add a hosted DB later        |
+| Persisting todos after agent tool calls | **Client**                                        | Server streams tool calls; client executes tools against `todos.service` |
 
 **Client → API calls**
 
@@ -94,7 +94,7 @@ app/api/auth/sign-in+api.ts  →  POST /api/auth/sign-in   (only if that endpoin
 **`useChat` + tools**
 
 - Point `useChat({ api: '/api/chat' })` (or equivalent per current AI SDK docs) at the `+api` route.
-- Tools that **write to SQLite** (`createTodo`, `completeTodo`, …) are implemented on the **client** (tool execute handler / `onToolCall`) and call `todos.service` — the server route only streams model output and tool *definitions*, not device DB access.
+- Tools that **write to SQLite** (`createTodo`, `completeTodo`, …) are implemented on the **client** (tool execute handler / `onToolCall`) and call `todos.service` — the server route only streams model output and tool _definitions_, not device DB access.
 
 **Do not**
 
@@ -150,17 +150,17 @@ There are **two halves** of the codebase: client (the device app) and server (th
 
 ### Allowed dependencies
 
-| Layer                   | Can import from                                                                |
-| ----------------------- | ------------------------------------------------------------------------------ |
-| Presentation (client)   | Orchestration, Shared kernel, `constants/**`                                   |
-| Orchestration (client)  | Client services, `lib/infrastructure/api-client.ts`, Shared kernel             |
-| Client services         | `lib/queries/**`, `lib/models/**`, Shared kernel, `lib/infrastructure/**`      |
-| Client queries          | `lib/db/**`, `lib/models/**` (types), Shared kernel                            |
-| Client models           | `lib/db/schema.ts` (for `$inferSelect`), Shared kernel                         |
-| `+api` handlers         | `server/services/**`, `server/env.ts`, Shared kernel                           |
-| Server services         | `server/integrations/**`, `server/ai/**`, `server/env.ts`, Shared kernel       |
-| Server integrations     | `server/env.ts`, Shared kernel                                                 |
-| `server/ai/**`          | `server/env.ts`, `server/integrations/**`, Shared kernel                       |
+| Layer                  | Can import from                                                           |
+| ---------------------- | ------------------------------------------------------------------------- |
+| Presentation (client)  | Orchestration, Shared kernel, `constants/**`                              |
+| Orchestration (client) | Client services, `lib/infrastructure/api-client.ts`, Shared kernel        |
+| Client services        | `lib/queries/**`, `lib/models/**`, Shared kernel, `lib/infrastructure/**` |
+| Client queries         | `lib/db/**`, `lib/models/**` (types), Shared kernel                       |
+| Client models          | `lib/db/schema.ts` (for `$inferSelect`), Shared kernel                    |
+| `+api` handlers        | `server/services/**`, `server/env.ts`, Shared kernel                      |
+| Server services        | `server/integrations/**`, `server/ai/**`, `server/env.ts`, Shared kernel  |
+| Server integrations    | `server/env.ts`, Shared kernel                                            |
+| `server/ai/**`         | `server/env.ts`, `server/integrations/**`, Shared kernel                  |
 
 ### Forbidden cross-layer moves
 
@@ -341,7 +341,7 @@ This is a hackathon, but the code stays clean. Non-negotiable:
 
 - Write plain functions in render for event handlers (`onPress={() => …}`, `async function handleSend() { … }`). The compiler stabilizes what needs stabilizing.
 - **Destructure functions from hooks at the top of the component** — never dot into a hook return object inside JSX or a nested handler (`router.push` → `const { push } = useRouter()` then `push(...)`). Same for `useChat`, `useRecorder`, etc.
-- **Prefer event handlers over effects** for user-driven work (send message, record mic, navigate). Effects are for synchronizing with *external* systems (bootstrap session once, splash hide, web color-scheme hydration, starting a Reanimated loop on mount).
+- **Prefer event handlers over effects** for user-driven work (send message, record mic, navigate). Effects are for synchronizing with _external_ systems (bootstrap session once, splash hide, web color-scheme hydration, starting a Reanimated loop on mount).
 - **Derive UI state during render**, not in `useEffect` (`const isThinking = chatStatus === 'streaming'` — not `useEffect` + `setState`).
 - **Stable references for third-party instances**: if a library stores the object you pass in (e.g. `new DefaultChatTransport(...)` to `useChat`), create it once via `useRef` lazy init or module scope — a new instance every render still breaks even with the compiler.
 
@@ -428,38 +428,38 @@ If you're about to type `// ` and the code below it is obvious from its identifi
 
 ```tsx
 // stores/capture.ts
-import { create } from "zustand";
+import { create } from 'zustand'
 
 type CaptureState = {
-  status: "idle" | "recording" | "thinking" | "speaking";
-  transcript: string;
-  audioUri: string | null;
-};
+    status: 'idle' | 'recording' | 'thinking' | 'speaking'
+    transcript: string
+    audioUri: string | null
+}
 
 const useStore = create<CaptureState>(() => ({
-  status: "idle",
-  transcript: "",
-  audioUri: null,
-}));
+    status: 'idle',
+    transcript: '',
+    audioUri: null
+}))
 
-const { setState, getState } = useStore;
+const { setState, getState } = useStore
 
 // ---------- subscriber hooks (read) ----------
-export const useCaptureStatus = () => useStore((s) => s.status);
-export const useCaptureTranscript = () => useStore((s) => s.transcript);
-export const useCaptureAudioUri = () => useStore((s) => s.audioUri);
+export const useCaptureStatus = () => useStore(s => s.status)
+export const useCaptureTranscript = () => useStore(s => s.transcript)
+export const useCaptureAudioUri = () => useStore(s => s.audioUri)
 
 // ---------- actions (write) ----------
-export function setCaptureStatus(status: CaptureState["status"]) {
-  setState({ status });
+export function setCaptureStatus(status: CaptureState['status']) {
+    setState({ status })
 }
 
 export function appendTranscript(chunk: string) {
-  setState({ transcript: getState().transcript + chunk });
+    setState({ transcript: getState().transcript + chunk })
 }
 
 export function resetCapture() {
-  setState({ status: "idle", transcript: "", audioUri: null });
+    setState({ status: 'idle', transcript: '', audioUri: null })
 }
 ```
 
@@ -491,14 +491,14 @@ export function resetCapture() {
 
 ```tsx
 // hooks/queries/use-todos.ts
-import { useQuery } from "@tanstack/react-query";
-import { listTodosForCurrentUser } from "@/lib/services/todos.service";
+import { useQuery } from '@tanstack/react-query'
+import { listTodosForCurrentUser } from '@/lib/services/todos.service'
 
 export function useTodos() {
-  return useQuery({
-    queryKey: ["todos"],
-    queryFn: listTodosForCurrentUser,
-  });
+    return useQuery({
+        queryKey: ['todos'],
+        queryFn: listTodosForCurrentUser
+    })
 }
 ```
 
@@ -510,10 +510,10 @@ export function useTodos() {
 - Drizzle for type-safe queries. Schemas in `lib/db/schema.ts`.
 - Migrations: use `drizzle-kit generate` and apply on app boot via `useMigrations()` from `drizzle-orm/expo-sqlite/migrator`.
 - Tables (initial):
-  - `users` — `id`, `email`, `password_hash`, `first_name`, `last_name`, `created_at`
-  - `sessions` — `token`, `user_id`, `expires_at`
-  - `todos` — `id`, `user_id`, `title`, `notes`, `due_at`, `priority`, `category` (important | schedule | general), `time_label`, `source` (manual | voice | gmail), `created_at`, `completed_at`
-  - `gmail_tokens` — `user_id`, `access_token`, `refresh_token`, `expires_at`, `email`
+    - `users` — `id`, `email`, `password_hash`, `first_name`, `last_name`, `created_at`
+    - `sessions` — `token`, `user_id`, `expires_at`
+    - `todos` — `id`, `user_id`, `title`, `notes`, `due_at`, `priority`, `category` (important | schedule | general), `time_label`, `source` (manual | voice | gmail), `created_at`, `completed_at`
+    - `gmail_tokens` — `user_id`, `access_token`, `refresh_token`, `expires_at`, `email`
 
 ---
 
@@ -536,21 +536,21 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 - `app/api/chat+api.ts` is a 4-line handler → `server/services/chat.service.handleChatRequest()` → `createAgentUIStreamResponse({ agent, uiMessages })`.
 - **Type-safe `useChat`**: `server/ai/agent.ts` exports `ChatAgentUIMessage = InferAgentUIMessage<ChatAgent>`. The client uses `useChat<ChatAgentUIMessage>()` for typed message parts (`tool-createTodo`, `tool-pullGmailTodos`, …).
 - **Tool execution split** (device SQLite is unreachable from the server, and Gmail tokens live in secure-store):
-  - **Client tools** (defined with NO `execute` on the server): `createTodo`, `completeTodo`, `listTodos`, `pullGmailTodos`. The client's `useChat` handles them via `onToolCall` and calls either `lib/services/todos.service.ts` (SQLite) or `POST /api/gmail/sync` with the Gmail access token from secure-store.
-  - **Server tools** (full `execute` on the server): none yet. `renderUi({ kind, props })` will be added as a server tool returning a typed UI descriptor (discriminated union in `lib/z`) for the client to render inline.
+    - **Client tools** (defined with NO `execute` on the server): `createTodo`, `completeTodo`, `listTodos`, `pullGmailTodos`. The client's `useChat` handles them via `onToolCall` and calls either `lib/services/todos.service.ts` (SQLite) or `POST /api/gmail/sync` with the Gmail access token from secure-store.
+    - **Server tools** (full `execute` on the server): none yet. `renderUi({ kind, props })` will be added as a server tool returning a typed UI descriptor (discriminated union in `lib/z`) for the client to render inline.
 - Tools (initial):
-  - `createTodo({ title, notes?, dueAt?, priority?, category, timeLabel? })` — client.
-  - `listTodos({ category? })` — client.
-  - `completeTodo({ id })` — client.
-  - `pullGmailTodos({ since? })` — client: attaches Gmail access token, POSTs `/api/gmail/sync`, the server fetches recent emails and uses the LLM (`generateText` + `Output.object`) to return a small list of typed candidates.
+    - `createTodo({ title, notes?, dueAt?, priority?, category, timeLabel? })` — client.
+    - `listTodos({ category? })` — client.
+    - `completeTodo({ id })` — client.
+    - `pullGmailTodos({ since? })` — client: attaches Gmail access token, POSTs `/api/gmail/sync`, the server fetches recent emails and uses the LLM (`generateText` + `Output.object`) to return a small list of typed candidates.
 - **AI SDK gotchas** (per `ai-sdk` skill `references/common-errors.md`): use `inputSchema` not `parameters`; use `maxOutputTokens` not `maxTokens`; use `stopWhen: stepCountIs(n)` not `maxSteps`; use `toUIMessageStreamResponse()` / `createAgentUIStreamResponse({ uiMessages })`; on the client, manage input state with `useState` and call `sendMessage({ text })` (the old `input`/`handleInputChange`/`handleSubmit` are gone).
 - Voice flow (every hop is latency-optimized — see §13):
-  1. User holds mic → `expo-audio` records at **16kHz mono** (custom `RecordingOptions`, not the `HIGH_QUALITY` preset — uploads are ~4x smaller, no STT accuracy loss).
-  2. Release → upload to `/api/transcribe+api.ts` → **Groq `whisper-large-v3-turbo`** direct (~180-260ms round-trip, ~4-5x faster than OpenAI Whisper; Gateway does not proxy audio) → text.
-  3. Text → `useChat.sendMessage({ text })` → `google/gemini-3-flash` via AI Gateway (fast TTFT).
-  4. As tokens stream, `extractSentences` (`lib/infrastructure/sentence-stream.ts`) flushes **completed sentences** (hard breaks `.!?…\n` only — splitting on commas makes each chunk sound like its own statement) into `useSpeaker.speak()`.
-  5. `useSpeaker` enqueues each chunk and starts the `POST /api/speak` fetch **immediately**; `/api/speak` pipes OpenAI TTS's response body straight through (no `arrayBuffer()` buffering on the server). The client downloads, caches as mp3, plays via `createAudioPlayer`; the next chunk is already synthesizing in parallel. `expo-speech` is the per-chunk fallback on network failure.
-  6. `setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })` runs **once** at root mount — never re-called in the recording or playback hot paths.
+    1. User holds mic → `expo-audio` records at **16kHz mono** (custom `RecordingOptions`, not the `HIGH_QUALITY` preset — uploads are ~4x smaller, no STT accuracy loss).
+    2. Release → upload to `/api/transcribe+api.ts` → **Groq `whisper-large-v3-turbo`** direct (~180-260ms round-trip, ~4-5x faster than OpenAI Whisper; Gateway does not proxy audio) → text.
+    3. Text → `useChat.sendMessage({ text })` → `google/gemini-3-flash` via AI Gateway (fast TTFT).
+    4. As tokens stream, `extractSentences` (`lib/infrastructure/sentence-stream.ts`) flushes **completed sentences** (hard breaks `.!?…\n` only — splitting on commas makes each chunk sound like its own statement) into `useSpeaker.speak()`.
+    5. `useSpeaker` enqueues each chunk and starts the `POST /api/speak` fetch **immediately**; `/api/speak` pipes OpenAI TTS's response body straight through (no `arrayBuffer()` buffering on the server). The client downloads, caches as mp3, plays via `createAudioPlayer`; the next chunk is already synthesizing in parallel. `expo-speech` is the per-chunk fallback on network failure.
+    6. `setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })` runs **once** at root mount — never re-called in the recording or playback hot paths.
 
 ---
 
@@ -566,15 +566,15 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 **Client flow (device, `app/(app)/settings/sync-gmail.tsx`):**
 
 - Use `expo-auth-session/providers/google` `Google.useAuthRequest`:
-  ```ts
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID!,
-    scopes: ['openid', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
-    responseType: 'code',                  // auth-code + PKCE (the lib handles PKCE)
-    extraParams: { access_type: 'offline', prompt: 'consent' }, // forces refresh_token
-  });
-  ```
-  `access_type: 'offline'` + `prompt: 'consent'` is what makes Google mint a `refresh_token`. Without `prompt: 'consent'`, returning users get only an access token.
+    ```ts
+    const [request, response, promptAsync] = Google.useAuthRequest({
+        clientId: process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID!,
+        scopes: ['openid', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
+        responseType: 'code', // auth-code + PKCE (the lib handles PKCE)
+        extraParams: { access_type: 'offline', prompt: 'consent' } // forces refresh_token
+    })
+    ```
+    `access_type: 'offline'` + `prompt: 'consent'` is what makes Google mint a `refresh_token`. Without `prompt: 'consent'`, returning users get only an access token.
 - On `response.type === 'success'`: POST `{ code, redirectUri, codeVerifier }` to `/api/gmail/callback`. The server exchanges the code (client_secret stays server-side) and returns `{ accessToken, refreshToken, expiresIn, email }`. Persist these to `gmail_tokens` (device SQLite) and the access/refresh tokens to `expo-secure-store`.
 - Token refresh: when access token expires, POST `{ refreshToken }` to `/api/gmail/refresh` (or call from `gmail.service` on the client). Update secure-store + `gmail_tokens.expires_at`.
 
@@ -582,9 +582,9 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 
 - `/api/gmail/callback` → `server/services/gmail.service.handleGmailCallback` → `server/integrations/gmail/oauth.exchangeAuthCode` → fetches `userinfo` for the email.
 - `/api/gmail/sync` (`Authorization: Bearer <gmailAccessToken>`) → `extractTodoCandidates`:
-  1. `listMessageIds(token, 'newer_than:7d -category:promotions -category:social', 15)`.
-  2. `getMessageMetadata` for each (uses `format=metadata` + `metadataHeaders=Subject|From|Date` — no email body fetched, lighter quota).
-  3. Pass subjects + snippets into `generateText({ model, output: Output.object(...) })` to extract typed todo candidates.
+    1. `listMessageIds(token, 'newer_than:7d -category:promotions -category:social', 15)`.
+    2. `getMessageMetadata` for each (uses `format=metadata` + `metadataHeaders=Subject|From|Date` — no email body fetched, lighter quota).
+    3. Pass subjects + snippets into `generateText({ model, output: Output.object(...) })` to extract typed todo candidates.
 
 **Settings UI:**
 

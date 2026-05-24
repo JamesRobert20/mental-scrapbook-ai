@@ -1,12 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 
-import { listTodosForCurrentUser } from '@/lib/services/todos.service';
-import type { TodoCategory } from '@/lib/models/todo.model';
+import { listTodosForCurrentUser } from '@/lib/services/todos.service'
 
-export function useTodos(category?: TodoCategory) {
-  return useQuery({
-    queryKey: category ? ['todos', category] : ['todos'],
-    queryFn: () => listTodosForCurrentUser(category),
-    staleTime: 1000 * 60,
-  });
+export function useTodos() {
+    return useQuery({
+        queryKey: ['todos'],
+        queryFn: listTodosForCurrentUser,
+        staleTime: 1000 * 60
+    })
 }

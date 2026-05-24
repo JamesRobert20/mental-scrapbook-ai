@@ -1,24 +1,24 @@
-import type { InferSelectModel } from 'drizzle-orm';
+import type { InferSelectModel } from 'drizzle-orm'
 
-import { users } from '@/lib/db/schema';
+import { users } from '@/lib/db/schema'
 
-export type UserRow = InferSelectModel<typeof users>;
+export type UserRow = InferSelectModel<typeof users>
 
 export type User = {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  createdAt: string;
-};
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+    createdAt: string
+}
 
-export type SessionUser = Pick<User, 'id' | 'email' | 'firstName' | 'lastName'>;
+export type SessionUser = Pick<User, 'id' | 'email' | 'firstName' | 'lastName'>
 
 export function mapUserRow(row: UserRow): SessionUser {
-  return {
-    id: row.id,
-    email: row.email,
-    firstName: row.firstName,
-    lastName: row.lastName,
-  };
+    return {
+        id: row.id,
+        email: row.email,
+        firstName: row.firstName,
+        lastName: row.lastName
+    }
 }

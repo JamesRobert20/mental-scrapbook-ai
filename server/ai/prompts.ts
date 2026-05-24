@@ -1,1 +1,1 @@
-export { SYSTEM_PROMPT } from '@/lib/ai/prompts';
+export { buildSystemPrompt } from '@/lib/ai/prompts'
