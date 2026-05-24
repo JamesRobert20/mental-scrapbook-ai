@@ -6,6 +6,27 @@ Built in a weekend for the SAIT Hackathon. Most of what I forget isn't important
 
 **Demo target:** Expo Go on a physical device (no custom native builds, no separate backend).
 
+## A look at it
+
+<div align="center">
+
+<table>
+  <tr>
+    <td align="center"><img src="assets/images/screen%201.jpg" width="220" alt="Capture — hold the mic, brain-dump in one go"/><br/><sub><b>Hold and talk.</b><br/>The day lands while you speak.</sub></td>
+    <td align="center"><img src="assets/images/screen%202.jpg" width="220" alt="Capture — smaller items captured into a list"/><br/><sub><b>Smaller stuff, too.</b><br/>Quietly slotted into General.</sub></td>
+    <td align="center"><img src="assets/images/screen%203.jpg" width="220" alt="Capture — priorities marked and assistant answers back"/><br/><sub><b>Ask it back.</b><br/>“What should I knock out first?”</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/images/screen%204.jpg" width="220" alt="Insights — Important + Schedule timeline"/><br/><sub><b>Important + Schedule.</b><br/>Buckets are <i>derived</i>, not stored.</sub></td>
+    <td align="center"><img src="assets/images/screen%205.jpg" width="220" alt="Insights — Schedule + General"/><br/><sub><b>The rest of the day.</b><br/>Schedule + General, all from one ramble.</sub></td>
+    <td align="center"><img src="assets/images/screen%206.jpg" width="220" alt="Profile — Account, Preferences, Session"/><br/><sub><b>Profile.</b><br/>Language · Voice · Gmail · Calendar.</sub></td>
+  </tr>
+</table>
+
+<sub><i>Screenshots predate the rename — header still reads “Mental Scrapbook”.</i></sub>
+
+</div>
+
 ## What's interesting under the hood
 
 If you only have time to read three files, read these:
