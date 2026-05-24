@@ -8,11 +8,10 @@ export const Routes = {
   capture: '/(app)' as Href,
   profile: '/(app)/profile' as Href,
   settings: {
-    personalInfo: '/(app)/settings/personal-info' as Href,
-    security: '/(app)/settings/security' as Href,
-    notifications: '/(app)/settings/notifications' as Href,
-    language: '/(app)/settings/language' as Href,
-    voice: '/(app)/settings/voice' as Href,
-    syncGmail: '/(app)/settings/sync-gmail' as Href,
+    personalInfo: '/(app)/profile/personal-info' as Href,
+    notifications: '/(app)/profile/notifications' as Href,
+    language: '/(app)/profile/language' as Href,
+    voice: '/(app)/profile/voice' as Href,
+    syncGmail: '/(app)/profile/sync-gmail' as Href,
   },
 } as const;

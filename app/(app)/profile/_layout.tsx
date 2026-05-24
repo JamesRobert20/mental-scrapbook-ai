@@ -2,18 +2,18 @@ import { Stack } from 'expo-router';
 
 import { Colors } from '@/constants/theme';
 
-export default function SettingsLayout() {
+export default function ProfileLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: true,
         headerShadowVisible: false,
         headerStyle: { backgroundColor: Colors.light.background },
         headerTintColor: Colors.light.onBackground,
+        headerBackTitle: 'Profile',
         contentStyle: { backgroundColor: Colors.light.background },
       }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="personal-info" options={{ title: 'Personal Information' }} />
-      <Stack.Screen name="security" options={{ title: 'Security' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="language" options={{ title: 'Language' }} />
       <Stack.Screen name="voice" options={{ title: 'Voice' }} />

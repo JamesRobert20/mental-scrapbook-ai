@@ -8,7 +8,7 @@ import Text from '@/components/ui/text';
 import { Routes } from '@/lib/navigation/routes';
 import { signOut } from '@/lib/services/auth.service';
 import { setAuthUnauthenticated, useAuthUser } from '@/stores/auth.store';
-import { Colors, Radii, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 
 export default function ProfileScreen() {
   const user = useAuthUser();
@@ -41,11 +41,6 @@ export default function ProfileScreen() {
             label="Personal Information"
             icon="person-outline"
             onPress={() => router.push(Routes.settings.personalInfo)}
-          />
-          <SettingsRow
-            label="Security & Privacy"
-            icon="shield-outline"
-            onPress={() => router.push(Routes.settings.security)}
           />
         </SettingsSection>
 

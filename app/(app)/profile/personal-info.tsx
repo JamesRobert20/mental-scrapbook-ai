@@ -23,6 +23,7 @@ export default function PersonalInfoScreen() {
 const styles = StyleSheet.create({
   scroll: {
     padding: Spacing.screenPadding,
+    paddingBottom: 140,
     gap: Spacing.md,
   },
   intro: {

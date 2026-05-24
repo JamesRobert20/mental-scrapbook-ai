@@ -20,12 +20,6 @@ export default function AppLayout() {
       <Tabs.Screen name="insights" options={{ title: 'Insights' }} />
       <Tabs.Screen name="index" options={{ title: 'Capture' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }
