@@ -36,6 +36,9 @@ Product overview, install, env template, and run commands: **[README.md](./READM
 | Vector / shapes      | `react-native-svg`                                                  | The "Pulse" indicator, organic shapes                                       |
 | Images               | `expo-image`                                                        | Never `<Image>` from `react-native`, never `<img>`                          |
 | Haptics              | `expo-haptics`                                                      | Conditional on iOS for delight                                              |
+| Calendar             | `expo-calendar`                                                     | Scheduled todos → dedicated "Mental Scrapbook" calendar; see §11.2          |
+| Local notifications  | `expo-notifications`                                                | Foreground todo reminders + banner queue; see §11.1                         |
+| Profile photos       | `expo-image-picker` + `expo-file-system`                            | Avatar copied to `documentDirectory/avatars`                                |
 
 ### Expo Go compatibility is non-negotiable
 
@@ -195,6 +198,8 @@ app/                              # routes ONLY. No co-located components, types
       language.tsx
       voice.tsx                   # TTS voice picker
       sync-gmail.tsx              # Gmail connect / auto-scan toggle / scan now
+      calendar.tsx                # calendar sync toggle + backfill on enable
+      developer.tsx               # export redacted SQLite snapshot (expo-sharing)
   api/                            # Expo +api routes — THIN handlers; delegate to server/
     chat+api.ts                   # POST → server/services/chat.service
     speak+api.ts                  # POST → server/services/speech.service (streams TTS)
@@ -234,7 +239,7 @@ stores/                           # zustand stores (orchestration). See §6.
   auth.store.ts                   # session + user, bootstrap status
   capture.store.ts                # mic/recording/streaming state
   insights.store.ts               # selected day key
-  preferences.store.ts            # speech voice, gmail auto-sync, notifications toggles
+  preferences.store.ts            # speech voice, gmail auto-sync, notifications, calendar sync toggles
   banner.store.ts                 # in-app notification banner queue
 
 hooks/                            # orchestration: react-query + small RN hooks.
@@ -246,6 +251,8 @@ hooks/                            # orchestration: react-query + small RN hooks.
     use-sign-in.ts
     use-sign-up.ts
     use-gmail-sync.ts             # runGmailSyncForCurrentUser → invalidate todos
+    use-update-profile.ts
+    use-update-avatar.ts
   use-auth-bootstrap.ts
   use-capture-chat.ts             # wraps @ai-sdk/react useChat + client tool execution
   use-recorder.ts                 # wraps expo-audio (16kHz mono RecordingOptions)
@@ -283,8 +290,9 @@ lib/                              # CLIENT + shared kernel (also imported by ser
 
   services/                       # client business logic — orchestrate queries, return DTOs
     auth.service.ts               # signUp / signIn / signOut / bootstrapSession / getCurrentUser
-    todos.service.ts              # listTodosForCurrentUser / createTodoForCurrentUser / completeTodoForCurrentUser
+    todos.service.ts              # CRUD + calendar event create/delete + backfill/clear on toggle
     gmail.service.ts              # exchange/persist/disconnect, syncGmailTodos, runGmailSyncForCurrentUser
+    debug.service.ts              # buildDatabaseSnapshot / writeSnapshotToFile (redacted export)
 
   db/                             # device SQLite only — NEVER imported from server/
     client.ts                     # openDatabaseSync + IF NOT EXISTS DDL + drizzle()
@@ -295,6 +303,7 @@ lib/                              # CLIENT + shared kernel (also imported by ser
     api-url.ts                    # apiUrl('/api/...') — derives host from Constants.experienceUrl
     crypto.ts                     # bcryptjs hashing (Expo Go safe)
     date-keys.ts                  # dayKey(), hasScheduledTime(), formatTimeLabel()
+    calendar.ts                   # expo-calendar wrapper — permission, dedicated calendar, event CRUD
     haptics.ts                    # tap(tone) — single entry point over expo-haptics
     id.ts                         # createId(), createSessionToken()
     notifications.ts              # expo-notifications wrapper (permission, instant, schedule, cancel)
@@ -317,6 +326,11 @@ types/
   ambient-modules.d.ts            # declare module shims for untyped deps
 
 assets/                           # images, splash, icons
+
+scripts/                          # Node-only dev tools (tsx + .env.local; not bundled in Expo)
+  agent-probe.ts                  # pnpm agent "<prompt>" — one-shot ToolLoopAgent run
+  agent-scenarios.ts              # pnpm agent:scenarios — fixed prompts with pass/fail asserts
+  lib/agent-run.ts                # shared runner (real prompt/tools/model, stubbed SQLite)
 ```
 
 **Naming:**
@@ -433,7 +447,8 @@ If you're about to type `// ` and the code below it is obvious from its identifi
 
 ### Tests
 
-- Out of scope for the hackathon, but services and queries must be written so they could be unit-tested without React (no module-scope React hooks, no top-level `useColorScheme()`, etc.).
+- Unit tests for services/queries are out of scope for the hackathon, but services and queries must be written so they could be unit-tested without React (no module-scope React hooks, no top-level `useColorScheme()`, etc.).
+- **Exception:** `pnpm agent:scenarios` — live Gateway smoke tests for prompt + tool selection (`scripts/agent-scenarios.ts`). Not run in CI by default (needs secrets).
 
 ### Imports
 
@@ -447,7 +462,7 @@ If you're about to type `// ` and the code below it is obvious from its identifi
 - Root `_layout.tsx` loads fonts, runs `useAuthBootstrap()`, and renders a splash until both finish. It hosts `<QueryProvider>`, the root `<Stack>`, and the top-of-app `<NotificationBanner />`.
 - The gate is a `<Redirect href={Routes.signIn} />` inside `(app)/_layout.tsx`, keyed on `useAuthStatus()` from `stores/auth.store.ts`. The `(app)` group is the protected boundary; `(auth)` is public.
 - `(app)/_layout.tsx` mounts `useGmailAutoSync()` and `useTodoReminders()` (foreground-only, see §11.1), then renders `<Tabs>` with a custom `tabBar` prop pointing at `components/ui/pill-tab-bar.tsx`. Order: Insights (left), Capture (center), Profile (right). Capture is `index.tsx`.
-- Profile sub-screens live under `app/(app)/profile/**` (`personal-info`, `notifications`, `language`, `voice`, `sync-gmail`) and are pushed as a stack from `profile/index.tsx` via per-row Links. There is no separate `settings/` group.
+- Profile sub-screens live under `app/(app)/profile/**` (`personal-info`, `notifications`, `language`, `voice`, `sync-gmail`, `calendar`, `developer`) and are pushed as a stack from `profile/index.tsx` via per-row navigation. There is no separate `settings/` group.
 
 ---
 
@@ -548,9 +563,9 @@ export function useTodos() {
     - `schedule` ← `hasScheduledTime(dueAt)` (sorted chronologically)
     - `general` ← everything else
 - Tables:
-    - `users` — `id`, `email`, `password_hash`, `first_name`, `last_name`, `created_at`
+    - `users` — `id`, `email`, `password_hash`, `first_name`, `last_name`, `avatar_uri`, `created_at`
     - `sessions` — `token`, `user_id`, `expires_at`
-    - `todos` — `id`, `user_id`, `title`, `notes`, `due_at` (full ISO datetime with offset when scheduled), `priority` (low | medium | high), `source` (manual | voice | gmail), `created_at`, `completed_at`
+    - `todos` — `id`, `user_id`, `title`, `notes`, `due_at` (full ISO datetime with offset when scheduled), `priority` (low | medium | high), `source` (manual | voice | gmail), `created_at`, `completed_at`, `calendar_event_id` (native event id when synced)
     - `gmail_tokens` — `user_id`, `access_token`, `refresh_token`, `expires_at`, `email`, `last_synced_at`, `last_seen_message_id` (server-side dedupe cursor — see §11.1)
 
 ---
@@ -563,6 +578,7 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 - Bootstrap: read token from secure-store → `sessions.repo` + `users.repo` validate → hydrate `stores/auth.store.ts`.
 - Password hashing: `bcryptjs` in `lib/infrastructure/crypto.ts` (pure JS, Expo Go safe).
 - Sign-out: delete session row + clear secure-store.
+- Profile edits: `auth.service.updateProfile()` / `updateAvatar()` — `users` row + avatar file under `documentDirectory/avatars` (`hooks/mutations/use-update-profile.ts`, `use-update-avatar.ts`).
 - **Upgrade path (v2):** when we add a hosted DB, move auth to `app/api/auth/*+api.ts` and keep the same `auth.service` shape so screens don't change.
 
 ---
@@ -589,6 +605,7 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
     4. As tokens stream, `extractSentences` (`lib/infrastructure/sentence-stream.ts`) flushes **completed sentences** (hard breaks `.!?…\n` only — splitting on commas makes each chunk sound like its own statement) into `useSpeaker.speak()`.
     5. `useSpeaker` enqueues each chunk and starts the `POST /api/speak` fetch **immediately**; `/api/speak` pipes OpenAI TTS's response body straight through (no `arrayBuffer()` buffering on the server). The client downloads, caches as mp3, plays via `createAudioPlayer`; the next chunk is already synthesizing in parallel. `expo-speech` is the per-chunk fallback on network failure.
     6. `setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true })` runs **once** at root mount — never re-called in the recording or playback hot paths.
+- **Agent smoke tests (Node, optional):** `scripts/lib/agent-run.ts` runs the same `ToolLoopAgent` + `buildSystemPrompt()` + `lib/ai/tools.ts` schemas with stubbed `execute` handlers (no device SQLite). `pnpm agent "<prompt>"` for ad-hoc probes; `pnpm agent:scenarios` runs three fixed prompts with pass/fail assertions. Requires `AI_GATEWAY_API_KEY` in `.env.local`. Documented in [README.md § Scripts](./README.md#scripts).
 
 ---
 
@@ -650,6 +667,16 @@ When we move off Expo Go, the upgrade path is:
 1. Add `expo-background-task` (replaces deprecated `expo-background-fetch`) and register a task that calls `runGmailSyncForCurrentUser`. Minimum interval ≈ 15 min.
 2. Switch `expo-notifications` to remote push by adding a push token registration on sign-in and a `+api` endpoint that triggers Expo Push from the server when a server-side sync (cron) finds new important emails.
 3. Keep the foreground hook as the warm-path; background task is the cold-path.
+
+### 11.2 Calendar sync (optional, iOS-first)
+
+Scheduled todos (those with a specific time via `hasScheduledTime(dueAt)`) can mirror to the device calendar when `calendarSyncEnabled` is on in `stores/preferences.store.ts`.
+
+- **Permission + dedicated calendar** — `lib/infrastructure/calendar.ts` requests access, finds or creates a **"Mental Scrapbook"** calendar (never writes into the user's primary calendar).
+- **On create** — `todos.service.createTodoForCurrentUser` creates a 30‑min event and stores `calendar_event_id` on the row.
+- **On complete** — deletes the native event and clears `calendar_event_id`.
+- **Toggle on** (`app/(app)/profile/calendar.tsx`) — `backfillCalendarForCurrentUser()` adds events for existing open scheduled todos; **toggle off** — `clearCalendarForCurrentUser()` removes all tracked events.
+- **Expo Go:** `expo-calendar` works on iOS in Expo Go; `app.json` includes the plugin with `calendarPermission` copy.
 
 ---
 

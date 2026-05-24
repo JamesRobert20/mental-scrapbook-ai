@@ -148,6 +148,14 @@ export default function ProfileScreen() {
                     />
                 </SettingsSection>
 
+                <SettingsSection title="Developer">
+                    <SettingsRow
+                        label="Export database"
+                        icon="code-slash-outline"
+                        onPress={() => router.push(Routes.settings.developer)}
+                    />
+                </SettingsSection>
+
                 <SettingsSection title="Session">
                     <SettingsRow
                         label={isSigningOut ? 'Signing out…' : 'Sign Out'}

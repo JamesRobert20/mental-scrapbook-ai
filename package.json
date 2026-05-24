@@ -11,7 +11,9 @@
         "lint": "expo lint",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "rtc": "pnpm format && pnpm lint && pnpm typecheck"
+        "rtc": "pnpm format && pnpm lint && pnpm typecheck",
+        "agent": "tsx --env-file=.env.local scripts/agent-probe.ts",
+        "agent:scenarios": "tsx --env-file=.env.local scripts/agent-scenarios.ts"
     },
     "dependencies": {
         "@ai-sdk/openai": "^3.0.65",
@@ -46,6 +48,7 @@
         "expo-notifications": "~0.32.17",
         "expo-router": "~6.0.23",
         "expo-secure-store": "~15.0.8",
+        "expo-sharing": "~14.0.8",
         "expo-speech": "~14.0.8",
         "expo-splash-screen": "~31.0.13",
         "expo-sqlite": "~16.0.10",
@@ -75,6 +78,7 @@
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.5",
         "prettier": "^3.8.3",
+        "tsx": "^4.22.3",
         "typescript": "~5.9.2"
     },
     "private": true

@@ -13,6 +13,7 @@ export const Routes = {
         language: '/(app)/profile/language' as Href,
         voice: '/(app)/profile/voice' as Href,
         syncGmail: '/(app)/profile/sync-gmail' as Href,
-        calendar: '/(app)/profile/calendar' as Href
+        calendar: '/(app)/profile/calendar' as Href,
+        developer: '/(app)/profile/developer' as Href
     }
 } as const

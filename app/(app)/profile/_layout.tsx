@@ -23,6 +23,7 @@ export default function ProfileLayout() {
             <Stack.Screen name="voice" options={{ title: 'Voice' }} />
             <Stack.Screen name="sync-gmail" options={{ title: 'Sync Gmail' }} />
             <Stack.Screen name="calendar" options={{ title: 'Calendar' }} />
+            <Stack.Screen name="developer" options={{ title: 'Developer' }} />
         </Stack>
     )
 }

@@ -21,6 +21,9 @@ Smaller things I'm proud of:
 - Hand-rolled Expo `auth.expo.io/start` flow for Google OAuth in `app/(app)/profile/sync-gmail.tsx` — works in Expo Go without a custom build.
 - A todo's bucket (Important / Schedule / General) is **derived** from `priority` and `dueAt`, not stored. See `hooks/queries/use-insights-todos.ts`. Adding a new bucket is one filter, not a migration.
 - Foreground-only auto-sync with `AppState` + inflight guards in `hooks/use-gmail-auto-sync.ts`. Background tasks need a custom build (see [AGENTS.md §11.1](./AGENTS.md#111-auto-sync--notifications-foreground-only)) — we surface that limit in the UI instead of pretending.
+- Optional **device calendar** sync for scheduled todos — dedicated "Mental Scrapbook" calendar via `expo-calendar` (`lib/infrastructure/calendar.ts`, toggle in Profile → Calendar).
+- **Agent smoke tests** from the terminal — `pnpm agent:scenarios` runs the real ToolLoopAgent + tool schemas with stubbed SQLite (`scripts/`).
+- **Developer DB export** — Profile → Developer dumps redacted JSON of all device tables (`lib/services/debug.service.ts`) for debugging or demo state.
 
 ## Prerequisites
 
@@ -49,15 +52,17 @@ pnpm start --tunnel
 
 ## Scripts
 
-| Command               | Description                                           |
-| --------------------- | ----------------------------------------------------- |
-| `pnpm start`          | Expo dev server (Metro)                               |
-| `pnpm start --tunnel` | Dev server with tunnel (device + `/api`)              |
-| `pnpm typecheck`      | TypeScript check (`tsc --noEmit`)                     |
-| `pnpm lint`           | ESLint (includes Prettier rules)                      |
-| `pnpm format`         | Write Prettier formatting across the repo             |
-| `pnpm format:check`   | Verify Prettier formatting without writing            |
-| `pnpm rtc`            | Pre-commit shorthand: `format` → `lint` → `typecheck` |
+| Command                 | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `pnpm start`            | Expo dev server (Metro)                                                     |
+| `pnpm start --tunnel`   | Dev server with tunnel (device + `/api`)                                    |
+| `pnpm typecheck`        | TypeScript check (`tsc --noEmit`)                                           |
+| `pnpm lint`             | ESLint (includes Prettier rules)                                            |
+| `pnpm format`           | Write Prettier formatting across the repo                                   |
+| `pnpm format:check`     | Verify Prettier formatting without writing                                  |
+| `pnpm rtc`              | Pre-commit shorthand: `format` → `lint` → `typecheck`                       |
+| `pnpm agent "<prompt>"` | One-shot agent probe (real model + tools, stubbed SQLite)                   |
+| `pnpm agent:scenarios`  | Agent smoke tests (3 fixed prompts, pass/fail) — needs `AI_GATEWAY_API_KEY` |
 
 ## Environment variables
 
