@@ -2,9 +2,10 @@ import { createAudioPlayer } from 'expo-audio'
 import * as Speech from 'expo-speech'
 import { useRef } from 'react'
 
+import { getLanguageMeta } from '@/lib/i18n/languages'
 import { synthesizeSpeechToFile } from '@/lib/infrastructure/speech'
 import { setCaptureStatus } from '@/stores/capture.store'
-import { getSpeechVoice } from '@/stores/preferences.store'
+import { getLanguage, getSpeechVoice } from '@/stores/preferences.store'
 
 type ActivePlayer = ReturnType<typeof createAudioPlayer>
 type QueueItem = { text: string; synth: Promise<string> }
@@ -25,9 +26,10 @@ function playUri(uri: string, attach: (p: ActivePlayer) => void): Promise<void> 
 }
 
 function speakWithExpo(text: string): Promise<void> {
+    const locale = getLanguageMeta(getLanguage()).speechLocale
     return new Promise(resolve => {
         Speech.speak(text, {
-            language: 'en',
+            language: locale,
             onDone: () => resolve(),
             onStopped: () => resolve(),
             onError: () => resolve()

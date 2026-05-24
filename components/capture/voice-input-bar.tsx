@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native'
 
 import MicButton from '@/components/capture/mic-button'
 import Text from '@/components/ui/text'
+import { useT } from '@/lib/i18n/t'
 import { Colors, Radii, Spacing } from '@/constants/theme'
 
 type Props = {
@@ -22,11 +23,13 @@ export default function VoiceInputBar({
     onMicPressIn,
     onMicPressOut,
     onSubmit,
-    statusMessage = 'Your mind is clear.',
+    statusMessage,
     disabled = false,
     recording = false
 }: Props) {
+    const t = useT()
     const hasText = value.trim().length > 0
+    const status = statusMessage ?? t('capture.statusIdle')
 
     return (
         <View style={styles.wrap}>
@@ -35,7 +38,7 @@ export default function VoiceInputBar({
                     <TextInput
                         value={value}
                         onChangeText={onChangeText}
-                        placeholder="Type or hold the mic..."
+                        placeholder={t('capture.inputPlaceholder')}
                         placeholderTextColor={Colors.light.onSurfaceVariant}
                         style={styles.input}
                         multiline
@@ -46,7 +49,7 @@ export default function VoiceInputBar({
                         <Pressable
                             onPress={onSubmit}
                             disabled={disabled}
-                            accessibilityLabel="Send message"
+                            accessibilityLabel={t('capture.send')}
                             style={({ pressed }) => [
                                 styles.sendButton,
                                 pressed && styles.sendPressed
@@ -68,7 +71,7 @@ export default function VoiceInputBar({
                 />
             </View>
             <Text variant="bodySmall" muted style={styles.status}>
-                {statusMessage}
+                {status}
             </Text>
         </View>
     )

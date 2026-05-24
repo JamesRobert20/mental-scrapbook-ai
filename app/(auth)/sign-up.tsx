@@ -7,11 +7,13 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import Text from '@/components/ui/text'
 import { useSignUp } from '@/hooks/mutations/use-sign-up'
+import { useT } from '@/lib/i18n/t'
 import { Routes } from '@/lib/navigation/routes'
 import { Colors, Radii, Spacing } from '@/constants/theme'
 
 export default function SignUpScreen() {
     const signUp = useSignUp()
+    const t = useT()
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [email, setEmail] = useState('')
@@ -39,13 +41,13 @@ export default function SignUpScreen() {
                         <CaptureOrb />
                     </View>
                     <Text variant="headline" style={styles.welcome}>
-                        Create your account
+                        {t('auth.createAccount')}
                     </Text>
                     <View style={styles.form}>
                         <View style={styles.nameRow}>
                             <View style={styles.nameField}>
                                 <Input
-                                    label="First name"
+                                    label={t('auth.firstName')}
                                     value={firstName}
                                     onChangeText={setFirstName}
                                     placeholder="Jane"
@@ -53,7 +55,7 @@ export default function SignUpScreen() {
                             </View>
                             <View style={styles.nameField}>
                                 <Input
-                                    label="Last name"
+                                    label={t('auth.lastName')}
                                     value={lastName}
                                     onChangeText={setLastName}
                                     placeholder="Doe"
@@ -61,7 +63,7 @@ export default function SignUpScreen() {
                             </View>
                         </View>
                         <Input
-                            label="Email"
+                            label={t('auth.email')}
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
@@ -69,7 +71,7 @@ export default function SignUpScreen() {
                             placeholder="your@email.com"
                         />
                         <Input
-                            label="Password"
+                            label={t('auth.password')}
                             secureTextEntry
                             value={password}
                             onChangeText={setPassword}
@@ -82,16 +84,18 @@ export default function SignUpScreen() {
                         ) : null}
                         <Button
                             label={
-                                signUp.isPending ? 'Creating account…' : 'Create account'
+                                signUp.isPending
+                                    ? t('auth.creatingAccount')
+                                    : t('auth.createAccount')
                             }
                             onPress={handleSignUp}
                             disabled={signUp.isPending}
                         />
                     </View>
                     <Text variant="bodySmall" muted style={styles.footer}>
-                        Already have an account?{' '}
+                        {t('auth.hasAccount')}{' '}
                         <Link href={Routes.signIn}>
-                            <Text variant="bodySmall">Sign in</Text>
+                            <Text variant="bodySmall">{t('auth.signIn')}</Text>
                         </Link>
                     </Text>
                 </View>

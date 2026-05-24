@@ -1,3 +1,4 @@
+import { getLanguageMeta, isLanguageId } from '@/lib/i18n/languages'
 import { transcribeAudio } from '@/server/integrations/groq/whisper'
 
 export async function handleTranscribeRequest(request: Request): Promise<Response> {
@@ -13,6 +14,12 @@ export async function handleTranscribeRequest(request: Request): Promise<Respons
         )
     }
 
-    const result = await transcribeAudio(file)
+    const languageField = form.get('language')
+    const whisperLanguage =
+        typeof languageField === 'string' && isLanguageId(languageField)
+            ? getLanguageMeta(languageField).whisper
+            : undefined
+
+    const result = await transcribeAudio(file, { language: whisperLanguage })
     return Response.json(result)
 }

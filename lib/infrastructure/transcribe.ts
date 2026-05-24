@@ -1,4 +1,5 @@
 import { apiUrl } from '@/lib/infrastructure/api-url'
+import { getLanguage } from '@/stores/preferences.store'
 
 export async function transcribeAudioFile(uri: string): Promise<string> {
     const formData = new FormData()
@@ -7,6 +8,7 @@ export async function transcribeAudioFile(uri: string): Promise<string> {
         name: 'recording.m4a',
         type: 'audio/m4a'
     } as unknown as Blob)
+    formData.append('language', getLanguage())
 
     const response = await fetch(apiUrl('/api/transcribe'), {
         method: 'POST',

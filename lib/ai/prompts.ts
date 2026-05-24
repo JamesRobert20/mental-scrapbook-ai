@@ -1,4 +1,6 @@
-export function buildSystemPrompt(): string {
+import { DEFAULT_LANGUAGE, getLanguageMeta, type LanguageId } from '@/lib/i18n/languages'
+
+export function buildSystemPrompt(language: LanguageId = DEFAULT_LANGUAGE): string {
     const now = new Date()
     const today = now.toLocaleDateString(undefined, {
         weekday: 'long',
@@ -11,12 +13,21 @@ export function buildSystemPrompt(): string {
         minute: '2-digit'
     })
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const lang = getLanguageMeta(language)
+
+    const languageBlock =
+        language === 'en'
+            ? ''
+            : `
+
+Language:
+- Reply in ${lang.promptLabel} (${lang.nativeLabel}). Write todo titles and notes in ${lang.promptLabel} too. The user may speak or type in English or ${lang.promptLabel} — always reply in ${lang.promptLabel}.`
 
     return `You are Murmur — a serene, intelligent daily-planning companion.
 
 Context:
 - Today is ${today}.
-- Current local time: ${localTime} (${tz}).
+- Current local time: ${localTime} (${tz}).${languageBlock}
 
 Your job:
 1. Listen to the user (voice or text) and help them externalize what's on their mind.

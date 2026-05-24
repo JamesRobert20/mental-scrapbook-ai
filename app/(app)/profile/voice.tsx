@@ -5,15 +5,18 @@ import Button from '@/components/ui/button'
 import Text from '@/components/ui/text'
 import { useSpeaker } from '@/hooks/use-speaker'
 import { SPEECH_VOICES, type SpeechVoiceId } from '@/lib/ai/voices'
+import { getLanguageMeta } from '@/lib/i18n/languages'
+import { useT } from '@/lib/i18n/t'
 import { tap } from '@/lib/infrastructure/haptics'
-import { setSpeechVoice, useSpeechVoice } from '@/stores/preferences.store'
+import { setSpeechVoice, useLanguage, useSpeechVoice } from '@/stores/preferences.store'
 import { Colors, Radii, Shadows, Spacing } from '@/constants/theme'
-
-const PREVIEW_TEXT = 'Hi, this is what I sound like. Ready when you are.'
 
 export default function VoiceSettingsScreen() {
     const selected = useSpeechVoice()
+    const language = useLanguage()
+    const previewText = getLanguageMeta(language).voicePreview
     const { speak, stop } = useSpeaker()
+    const t = useT()
 
     function handleSelect(voice: SpeechVoiceId) {
         tap('selection')
@@ -22,7 +25,7 @@ export default function VoiceSettingsScreen() {
 
     function handlePreview() {
         stop()
-        void speak(PREVIEW_TEXT)
+        void speak(previewText)
     }
 
     return (
@@ -31,8 +34,7 @@ export default function VoiceSettingsScreen() {
             contentInsetAdjustmentBehavior="automatic"
         >
             <Text variant="body" muted style={styles.intro}>
-                Pick the voice the assistant uses when replying out loud. Falls back to
-                your device voice if the network is unavailable.
+                {t('voice.intro')}
             </Text>
 
             <View style={styles.card}>
@@ -69,7 +71,7 @@ export default function VoiceSettingsScreen() {
             </View>
 
             <Button
-                label="Preview voice"
+                label={t('voice.preview')}
                 variant="ghost"
                 onPress={handlePreview}
                 style={styles.preview}

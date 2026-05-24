@@ -21,6 +21,7 @@ import {
 } from '@/lib/services/todos.service'
 import type { CreateTodoInput } from '@/lib/z/todo'
 import { setCaptureStatus } from '@/stores/capture.store'
+import { getLanguage } from '@/stores/preferences.store'
 
 type AgentToolName = keyof typeof agentTools
 
@@ -80,7 +81,8 @@ export function useCaptureChat(options: UseCaptureChatOptions = {}) {
     if (!transportRef.current) {
         transportRef.current = new DefaultChatTransport({
             api: apiUrl('/api/chat'),
-            fetch: expoFetch as unknown as typeof globalThis.fetch
+            fetch: expoFetch as unknown as typeof globalThis.fetch,
+            body: () => ({ language: getLanguage() })
         })
     }
 

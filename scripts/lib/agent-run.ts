@@ -2,6 +2,7 @@ import { ToolLoopAgent, tool } from 'ai'
 
 import { buildSystemPrompt } from '../../lib/ai/prompts'
 import { agentTools as definitions } from '../../lib/ai/tools'
+import { DEFAULT_LANGUAGE, type LanguageId } from '../../lib/i18n/languages'
 
 export type ToolCallTrace = {
     tool: string
@@ -68,12 +69,19 @@ export function requireAgentEnv(): void {
     }
 }
 
-export async function runAgentProbe(prompt: string): Promise<AgentProbeResult> {
+export type RunAgentProbeOptions = {
+    language?: LanguageId
+}
+
+export async function runAgentProbe(
+    prompt: string,
+    options: RunAgentProbeOptions = {}
+): Promise<AgentProbeResult> {
     requireAgentEnv()
     const traces: ToolCallTrace[] = []
     const agent = new ToolLoopAgent({
         model: CHAT_MODEL,
-        instructions: buildSystemPrompt(),
+        instructions: buildSystemPrompt(options.language ?? DEFAULT_LANGUAGE),
         tools: buildStubTools(traces)
     })
     const result = await agent.generate({ prompt })

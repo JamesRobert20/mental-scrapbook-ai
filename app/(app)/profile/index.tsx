@@ -10,6 +10,7 @@ import SettingsRow from '@/components/profile/settings-row'
 import SettingsSection from '@/components/profile/settings-section'
 import Text from '@/components/ui/text'
 import { useUpdateAvatar } from '@/hooks/mutations/use-update-avatar'
+import { useT } from '@/lib/i18n/t'
 import { tap } from '@/lib/infrastructure/haptics'
 import { Routes } from '@/lib/navigation/routes'
 import { signOut } from '@/lib/services/auth.service'
@@ -20,6 +21,7 @@ export default function ProfileScreen() {
     const user = useAuthUser()
     const displayName = user ? user.firstName : 'Guest'
     const updateAvatar = useUpdateAvatar()
+    const t = useT()
     const [isSigningOut, setIsSigningOut] = useState(false)
     const [avatarError, setAvatarError] = useState<string | null>(null)
 
@@ -112,53 +114,55 @@ export default function ProfileScreen() {
                     ) : null}
                 </View>
 
-                <SettingsSection title="Account">
+                <SettingsSection title={t('profile.account')}>
                     <SettingsRow
-                        label="Personal Information"
+                        label={t('settings.personalInfo')}
                         icon="person-outline"
                         onPress={() => router.push(Routes.settings.personalInfo)}
                     />
                 </SettingsSection>
 
-                <SettingsSection title="Preferences">
+                <SettingsSection title={t('profile.preferences')}>
                     <SettingsRow
-                        label="Notifications"
+                        label={t('settings.notifications')}
                         icon="notifications-outline"
                         onPress={() => router.push(Routes.settings.notifications)}
                     />
                     <SettingsRow
-                        label="Language"
+                        label={t('settings.language')}
                         icon="globe-outline"
                         onPress={() => router.push(Routes.settings.language)}
                     />
                     <SettingsRow
-                        label="Voice"
+                        label={t('settings.voice')}
                         icon="mic-circle-outline"
                         onPress={() => router.push(Routes.settings.voice)}
                     />
                     <SettingsRow
-                        label="Sync Gmail"
+                        label={t('settings.syncGmail')}
                         icon="sync-outline"
                         onPress={() => router.push(Routes.settings.syncGmail)}
                     />
                     <SettingsRow
-                        label="Calendar"
+                        label={t('settings.calendar')}
                         icon="calendar-outline"
                         onPress={() => router.push(Routes.settings.calendar)}
                     />
                 </SettingsSection>
 
-                <SettingsSection title="Developer">
+                <SettingsSection title={t('profile.developer')}>
                     <SettingsRow
-                        label="Export database"
+                        label={t('settings.exportDatabase')}
                         icon="code-slash-outline"
                         onPress={() => router.push(Routes.settings.developer)}
                     />
                 </SettingsSection>
 
-                <SettingsSection title="Session">
+                <SettingsSection title={t('profile.session')}>
                     <SettingsRow
-                        label={isSigningOut ? 'Signing out…' : 'Sign Out'}
+                        label={
+                            isSigningOut ? t('profile.signingOut') : t('profile.signOut')
+                        }
                         icon="log-out-outline"
                         onPress={handleSignOut}
                         destructive

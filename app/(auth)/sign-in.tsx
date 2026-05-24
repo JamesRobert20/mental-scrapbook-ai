@@ -7,11 +7,13 @@ import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import Text from '@/components/ui/text'
 import { useSignIn } from '@/hooks/mutations/use-sign-in'
+import { useT } from '@/lib/i18n/t'
 import { Routes } from '@/lib/navigation/routes'
 import { Colors, Radii, Spacing } from '@/constants/theme'
 
 export default function SignInScreen() {
     const signIn = useSignIn()
+    const t = useT()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
 
@@ -38,11 +40,11 @@ export default function SignInScreen() {
                         <CaptureOrb />
                     </View>
                     <Text variant="headline" style={styles.welcome}>
-                        Welcome back
+                        {t('auth.welcomeBack')}
                     </Text>
                     <View style={styles.form}>
                         <Input
-                            label="Email"
+                            label={t('auth.email')}
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
@@ -50,7 +52,7 @@ export default function SignInScreen() {
                             placeholder="your@email.com"
                         />
                         <Input
-                            label="Password"
+                            label={t('auth.password')}
                             secureTextEntry
                             value={password}
                             onChangeText={setPassword}
@@ -62,15 +64,17 @@ export default function SignInScreen() {
                             </Text>
                         ) : null}
                         <Button
-                            label={signIn.isPending ? 'Signing in…' : 'Sign in'}
+                            label={
+                                signIn.isPending ? t('auth.signingIn') : t('auth.signIn')
+                            }
                             onPress={handleSignIn}
                             disabled={signIn.isPending}
                         />
                     </View>
                     <Text variant="bodySmall" muted style={styles.footer}>
-                        Don&apos;t have an account?{' '}
+                        {t('auth.noAccount')}{' '}
                         <Link href={Routes.signUp}>
-                            <Text variant="bodySmall">Sign Up</Text>
+                            <Text variant="bodySmall">{t('auth.signUp')}</Text>
                         </Link>
                     </Text>
                 </View>

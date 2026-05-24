@@ -16,17 +16,11 @@ import ScreenHeader from '@/components/layout/screen-header'
 import { useCaptureChat } from '@/hooks/use-capture-chat'
 import { useRecorder } from '@/hooks/use-recorder'
 import { useSpeaker } from '@/hooks/use-speaker'
+import { useT } from '@/lib/i18n/t'
 import { tap } from '@/lib/infrastructure/haptics'
 import { transcribeAudioFile } from '@/lib/infrastructure/transcribe'
 import { setCaptureStatus, useCaptureStatus } from '@/stores/capture.store'
 import { Colors, Spacing } from '@/constants/theme'
-
-const STATUS_MESSAGES: Record<string, string> = {
-    idle: 'Your mind is clear.',
-    recording: 'Listening…',
-    thinking: 'Thinking…',
-    speaking: 'Speaking…'
-}
 
 const TAB_BAR_OFFSET = 96
 
@@ -37,6 +31,13 @@ export default function CaptureScreen() {
     const insets = useSafeAreaInsets()
     const { speak } = useSpeaker()
     const { startRecording, stopRecording } = useRecorder()
+    const t = useT()
+    const statusMessages: Record<string, string> = {
+        idle: t('capture.statusIdle'),
+        recording: t('capture.statusListening'),
+        thinking: t('capture.statusThinking'),
+        speaking: t('capture.statusSpeaking')
+    }
 
     useEffect(() => {
         const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
@@ -112,8 +113,8 @@ export default function CaptureScreen() {
 
     const statusMessage =
         chatStatus === 'streaming' || chatStatus === 'submitted'
-            ? STATUS_MESSAGES.thinking
-            : STATUS_MESSAGES[status]
+            ? statusMessages.thinking
+            : statusMessages[status]
 
     return (
         <KeyboardAvoidingView

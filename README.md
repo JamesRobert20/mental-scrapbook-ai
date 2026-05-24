@@ -24,6 +24,7 @@ Smaller things I'm proud of:
 - Optional **device calendar** sync for scheduled todos — dedicated "Murmur" calendar via `expo-calendar` (`lib/infrastructure/calendar.ts`, toggle in Profile → Calendar).
 - **Agent smoke tests** from the terminal — `pnpm agent:scenarios` runs the real ToolLoopAgent + tool schemas with stubbed SQLite (`scripts/`).
 - **Developer DB export** — Profile → Developer dumps redacted JSON of all device tables (`lib/services/debug.service.ts`) for debugging or demo state.
+- **Multi-language** — Profile → Language picks one of 8 languages (English, Spanish, French, German, Portuguese, Italian, Japanese, Chinese). Agent replies, TTS voice, and Whisper STT all follow the choice (`lib/i18n/languages.ts`). High-visibility UI (auth, profile, capture, voice/language pickers) is also translated via `lib/i18n/strings.ts` + `useT()`; a few dense settings screens stay in English by design.
 
 ## Prerequisites
 

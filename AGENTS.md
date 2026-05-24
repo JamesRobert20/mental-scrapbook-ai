@@ -264,9 +264,14 @@ hooks/                            # orchestration: react-query + small RN hooks.
 lib/                              # CLIENT + shared kernel (also imported by server-side modules where noted)
   ai/                             # shared by client (useChat tool execution) AND server (agent definition)
     chat-types.ts                 # ChatAgentUIMessage re-export, tool name unions
-    prompts.ts                    # buildSystemPrompt(): SYSTEM_PROMPT with date/time/timezone
+    prompts.ts                    # buildSystemPrompt(language): system prompt with date/time/timezone + language instruction
     tools.ts                      # agentTools (createTodo, listTodos, completeTodo, pullGmailTodos)
     voices.ts                     # SpeechVoiceId enum + DEFAULT_SPEECH_VOICE
+
+  i18n/                           # multi-language: agent reply + STT + UI strings
+    languages.ts                  # SUPPORTED_LANGUAGES (en/es/fr/de/pt/it/ja/zh) — whisper hint, speechLocale, promptLabel, voicePreview
+    strings.ts                    # typed dictionary for high-visibility UI surfaces
+    t.ts                          # t(key, lang) + useT() — reads from preferences.store
 
   types/                          # shared errors, API response shapes
     api.ts
@@ -677,6 +682,18 @@ Scheduled todos (those with a specific time via `hasScheduledTime(dueAt)`) can m
 - **On complete** — deletes the native event and clears `calendar_event_id`.
 - **Toggle on** (`app/(app)/profile/calendar.tsx`) — `backfillCalendarForCurrentUser()` adds events for existing open scheduled todos; **toggle off** — `clearCalendarForCurrentUser()` removes all tracked events.
 - **Expo Go:** `expo-calendar` works on iOS in Expo Go; `app.json` includes the plugin with `calendarPermission` copy.
+
+### 11.3 Multi-language (i18n, demo scope)
+
+The user's preferred language is a single source of truth in `stores/preferences.store.ts` (`useLanguage` / `getLanguage` / `setLanguage`) and lives in `lib/i18n/languages.ts` (8 locales: `en`, `es`, `fr`, `de`, `pt`, `it`, `ja`, `zh`). It flows three places:
+
+- **Agent replies** — `hooks/use-capture-chat.ts` sends `{ language }` on every chat request → `server/services/chat.service.ts` → `createChatAgent({ language })` → `buildSystemPrompt(language)` appends a "reply in <Language>" instruction.
+- **STT** — `lib/infrastructure/transcribe.ts` appends `language` to the form data → `server/services/transcription.service.ts` maps it via `getLanguageMeta(...).whisper` and passes it as a Whisper hint to Groq.
+- **TTS fallback** — `hooks/use-speaker.ts` reads `getLanguageMeta(...).speechLocale` for the `expo-speech` per-chunk fallback.
+
+**UI strings (demo scope)** — `lib/i18n/strings.ts` is a flat typed dictionary keyed by `StringKey`; `lib/i18n/t.ts` exports `t(key, lang)` and `useT()` (reads the language from preferences and returns a `(key) => string` callable). Translated surfaces: auth screens, profile root, profile stack titles + back title, capture orb status + input bar, voice + language pickers. Dense settings screens (sync-gmail, calendar, developer body, personal-info, notifications body) and validation errors stay English by design and are acknowledged in the language picker footnote (`language.footnote` key).
+
+When adding a string to a translated surface: add a key to `STRINGS` in `lib/i18n/strings.ts` with all 8 locales, then `const t = useT()` and use `t('your.key')`. Do not hardcode strings on translated surfaces.
 
 ---
 

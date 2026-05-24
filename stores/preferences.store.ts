@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 import { DEFAULT_SPEECH_VOICE, type SpeechVoiceId } from '@/lib/ai/voices'
+import { DEFAULT_LANGUAGE, type LanguageId } from '@/lib/i18n/languages'
 
 export const AUTO_SYNC_INTERVAL_OPTIONS = [30, 60, 120, 300] as const
 export type AutoSyncIntervalSeconds = (typeof AUTO_SYNC_INTERVAL_OPTIONS)[number]
@@ -13,6 +14,7 @@ type PreferencesState = {
     notificationsEnabled: boolean
     reminderLeadMinutes: number
     calendarSyncEnabled: boolean
+    language: LanguageId
 }
 
 const preferencesStore = create<PreferencesState>(() => ({
@@ -21,7 +23,8 @@ const preferencesStore = create<PreferencesState>(() => ({
     gmailAutoSyncIntervalSeconds: DEFAULT_AUTO_SYNC_INTERVAL,
     notificationsEnabled: true,
     reminderLeadMinutes: 10,
-    calendarSyncEnabled: false
+    calendarSyncEnabled: false,
+    language: DEFAULT_LANGUAGE
 }))
 
 const { setState, getState } = preferencesStore
@@ -64,4 +67,12 @@ export const getCalendarSyncEnabled = (): boolean => getState().calendarSyncEnab
 
 export function setCalendarSyncEnabled(enabled: boolean): void {
     setState({ calendarSyncEnabled: enabled })
+}
+
+export const useLanguage = () => preferencesStore(s => s.language)
+
+export const getLanguage = (): LanguageId => getState().language
+
+export function setLanguage(language: LanguageId): void {
+    setState({ language })
 }
