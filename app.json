@@ -28,14 +28,20 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Mental Scrapbook to access your photos to set your profile picture."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#faf9f7",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#181916"
           }
         }
       ]

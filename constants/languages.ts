@@ -1,0 +1,62 @@
+export type AppLanguage = {
+  code: string;
+  label: string;
+  nativeLabel: string;
+};
+
+/** Common app interface languages (display + native name). */
+export const APP_LANGUAGES: AppLanguage[] = [
+  { code: 'en', label: 'English', nativeLabel: 'English' },
+  { code: 'zh-Hans', label: 'Chinese (Simplified)', nativeLabel: '中文（简体）' },
+  { code: 'zh-Hant', label: 'Chinese (Traditional)', nativeLabel: '中文（繁體）' },
+  { code: 'es', label: 'Spanish', nativeLabel: 'Español' },
+  { code: 'fr', label: 'French', nativeLabel: 'Français' },
+  { code: 'de', label: 'German', nativeLabel: 'Deutsch' },
+  { code: 'ja', label: 'Japanese', nativeLabel: '日本語' },
+  { code: 'ko', label: 'Korean', nativeLabel: '한국어' },
+  { code: 'pt', label: 'Portuguese', nativeLabel: 'Português' },
+  { code: 'pt-BR', label: 'Portuguese (Brazil)', nativeLabel: 'Português (Brasil)' },
+  { code: 'it', label: 'Italian', nativeLabel: 'Italiano' },
+  { code: 'ru', label: 'Russian', nativeLabel: 'Русский' },
+  { code: 'ar', label: 'Arabic', nativeLabel: 'العربية' },
+  { code: 'hi', label: 'Hindi', nativeLabel: 'हिन्दी' },
+  { code: 'bn', label: 'Bengali', nativeLabel: 'বাংলা' },
+  { code: 'id', label: 'Indonesian', nativeLabel: 'Bahasa Indonesia' },
+  { code: 'ms', label: 'Malay', nativeLabel: 'Bahasa Melayu' },
+  { code: 'th', label: 'Thai', nativeLabel: 'ไทย' },
+  { code: 'vi', label: 'Vietnamese', nativeLabel: 'Tiếng Việt' },
+  { code: 'tr', label: 'Turkish', nativeLabel: 'Türkçe' },
+  { code: 'pl', label: 'Polish', nativeLabel: 'Polski' },
+  { code: 'nl', label: 'Dutch', nativeLabel: 'Nederlands' },
+  { code: 'sv', label: 'Swedish', nativeLabel: 'Svenska' },
+  { code: 'no', label: 'Norwegian', nativeLabel: 'Norsk' },
+  { code: 'da', label: 'Danish', nativeLabel: 'Dansk' },
+  { code: 'fi', label: 'Finnish', nativeLabel: 'Suomi' },
+  { code: 'el', label: 'Greek', nativeLabel: 'Ελληνικά' },
+  { code: 'he', label: 'Hebrew', nativeLabel: 'עברית' },
+  { code: 'cs', label: 'Czech', nativeLabel: 'Čeština' },
+  { code: 'hu', label: 'Hungarian', nativeLabel: 'Magyar' },
+  { code: 'ro', label: 'Romanian', nativeLabel: 'Română' },
+  { code: 'uk', label: 'Ukrainian', nativeLabel: 'Українська' },
+  { code: 'sk', label: 'Slovak', nativeLabel: 'Slovenčina' },
+  { code: 'hr', label: 'Croatian', nativeLabel: 'Hrvatski' },
+  { code: 'sr', label: 'Serbian', nativeLabel: 'Српски' },
+  { code: 'bg', label: 'Bulgarian', nativeLabel: 'Български' },
+  { code: 'ca', label: 'Catalan', nativeLabel: 'Català' },
+  { code: 'eu', label: 'Basque', nativeLabel: 'Euskara' },
+  { code: 'gl', label: 'Galician', nativeLabel: 'Galego' },
+  { code: 'fa', label: 'Persian', nativeLabel: 'فارسی' },
+  { code: 'ur', label: 'Urdu', nativeLabel: 'اردو' },
+  { code: 'ta', label: 'Tamil', nativeLabel: 'தமிழ்' },
+  { code: 'te', label: 'Telugu', nativeLabel: 'తెలుగు' },
+  { code: 'mr', label: 'Marathi', nativeLabel: 'मराठी' },
+  { code: 'gu', label: 'Gujarati', nativeLabel: 'ગુજરાતી' },
+  { code: 'kn', label: 'Kannada', nativeLabel: 'ಕನ್ನಡ' },
+  { code: 'ml', label: 'Malayalam', nativeLabel: 'മലയാളം' },
+  { code: 'pa', label: 'Punjabi', nativeLabel: 'ਪੰਜਾਬੀ' },
+  { code: 'sw', label: 'Swahili', nativeLabel: 'Kiswahili' },
+  { code: 'af', label: 'Afrikaans', nativeLabel: 'Afrikaans' },
+  { code: 'fil', label: 'Filipino', nativeLabel: 'Filipino' },
+];
+
+export const DEFAULT_LANGUAGE_CODE = 'en';
