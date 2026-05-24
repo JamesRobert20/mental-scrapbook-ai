@@ -76,7 +76,7 @@ export default function PersonalInfoScreen() {
                 keyboardShouldPersistTaps="handled"
             >
                 <Text variant="body" muted style={styles.intro}>
-                    Update how Mental Scrapbook addresses you.
+                    Update how Murmur addresses you.
                 </Text>
 
                 <Input

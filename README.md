@@ -1,6 +1,6 @@
-# Mental Scrapbook
+# Murmur
 
-My head holds about four ideas at once before they start falling out. The grocery item overwrites the email I owe someone, which overwrites the friend's birthday on Saturday. Mental Scrapbook is the smallest possible fix: hold the mic, talk through them, and they land on your day before the next thing crowds them out. Connect Gmail and the few emails that actually need an action show up there too — newsletters and receipts stay where they belong.
+My head holds about four ideas at once before they start falling out. The grocery item overwrites the email I owe someone, which overwrites the friend's birthday on Saturday. Murmur is the smallest possible fix: hold the mic, talk through them, and they land on your day before the next thing crowds them out. Connect Gmail and the few emails that actually need an action show up there too — newsletters and receipts stay where they belong.
 
 Built in a weekend for the SAIT Hackathon. Most of what I forget isn't important. Enough of it is that _"I'll remember"_ stopped being a strategy a long time ago.
 
@@ -21,7 +21,7 @@ Smaller things I'm proud of:
 - Hand-rolled Expo `auth.expo.io/start` flow for Google OAuth in `app/(app)/profile/sync-gmail.tsx` — works in Expo Go without a custom build.
 - A todo's bucket (Important / Schedule / General) is **derived** from `priority` and `dueAt`, not stored. See `hooks/queries/use-insights-todos.ts`. Adding a new bucket is one filter, not a migration.
 - Foreground-only auto-sync with `AppState` + inflight guards in `hooks/use-gmail-auto-sync.ts`. Background tasks need a custom build (see [AGENTS.md §11.1](./AGENTS.md#111-auto-sync--notifications-foreground-only)) — we surface that limit in the UI instead of pretending.
-- Optional **device calendar** sync for scheduled todos — dedicated "Mental Scrapbook" calendar via `expo-calendar` (`lib/infrastructure/calendar.ts`, toggle in Profile → Calendar).
+- Optional **device calendar** sync for scheduled todos — dedicated "Murmur" calendar via `expo-calendar` (`lib/infrastructure/calendar.ts`, toggle in Profile → Calendar).
 - **Agent smoke tests** from the terminal — `pnpm agent:scenarios` runs the real ToolLoopAgent + tool schemas with stubbed SQLite (`scripts/`).
 - **Developer DB export** — Profile → Developer dumps redacted JSON of all device tables (`lib/services/debug.service.ts`) for debugging or demo state.
 

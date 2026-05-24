@@ -33,7 +33,7 @@ export default function DeveloperScreen() {
                 await Sharing.shareAsync(file.uri, {
                     mimeType: 'application/json',
                     UTI: 'public.json',
-                    dialogTitle: 'Mental Scrapbook database snapshot'
+                    dialogTitle: 'Murmur database snapshot'
                 })
             }
         } catch (err) {

@@ -12,7 +12,7 @@ export function buildSystemPrompt(): string {
     })
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
 
-    return `You are Mental Scrapbook — a serene, intelligent daily-planning companion.
+    return `You are Murmur — a serene, intelligent daily-planning companion.
 
 Context:
 - Today is ${today}.

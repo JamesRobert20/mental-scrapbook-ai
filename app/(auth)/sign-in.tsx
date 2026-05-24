@@ -31,7 +31,7 @@ export default function SignInScreen() {
                 contentInsetAdjustmentBehavior="automatic"
             >
                 <Text variant="headline" style={styles.brand}>
-                    Mental Scrapbook
+                    Murmur
                 </Text>
                 <View style={styles.card}>
                     <View style={styles.orbScale}>

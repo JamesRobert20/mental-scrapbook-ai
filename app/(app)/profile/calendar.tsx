@@ -84,7 +84,7 @@ export default function CalendarScreen() {
                 <ToggleRow
                     icon="calendar-outline"
                     label="Add scheduled todos to my calendar"
-                    description="A dedicated &ldquo;Mental Scrapbook&rdquo; calendar keeps things tidy."
+                    description="A dedicated &ldquo;Murmur&rdquo; calendar keeps things tidy."
                     value={enabled}
                     disabled={status.kind === 'working'}
                     onValueChange={value => void handleToggle(value)}

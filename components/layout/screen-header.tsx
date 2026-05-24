@@ -7,7 +7,7 @@ export default function ScreenHeader() {
     return (
         <View style={styles.wrap}>
             <Text variant="display" style={styles.title}>
-                Mental Scrapbook
+                Murmur
             </Text>
         </View>
     )

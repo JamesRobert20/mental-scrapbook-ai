@@ -1,4 +1,4 @@
-# Mental Scrapbook — Agent Playbook
+# Murmur — Agent Playbook
 
 > **Read this top-to-bottom before writing any code.** It is the authoritative source for architecture, conventions, and package choices. For humans: product overview, install, and env setup are in **[README.md](./README.md)** — do not duplicate those sections here.
 
@@ -6,7 +6,7 @@
 
 ## 0. Context
 
-Mental Scrapbook — voice-first daily planning (mic/text → AI → todos + voice reply; optional Gmail sync). **Expo Go on a physical device**; no custom native builds.
+Murmur — voice-first daily planning (mic/text → AI → todos + voice reply; optional Gmail sync). **Expo Go on a physical device**; no custom native builds.
 
 Product overview, install, env template, and run commands: **[README.md](./README.md)**.
 
@@ -36,7 +36,7 @@ Product overview, install, env template, and run commands: **[README.md](./READM
 | Vector / shapes      | `react-native-svg`                                                  | The "Pulse" indicator, organic shapes                                       |
 | Images               | `expo-image`                                                        | Never `<Image>` from `react-native`, never `<img>`                          |
 | Haptics              | `expo-haptics`                                                      | Conditional on iOS for delight                                              |
-| Calendar             | `expo-calendar`                                                     | Scheduled todos → dedicated "Mental Scrapbook" calendar; see §11.2          |
+| Calendar             | `expo-calendar`                                                     | Scheduled todos → dedicated "Murmur" calendar; see §11.2                    |
 | Local notifications  | `expo-notifications`                                                | Foreground todo reminders + banner queue; see §11.1                         |
 | Profile photos       | `expo-image-picker` + `expo-file-system`                            | Avatar copied to `documentDirectory/avatars`                                |
 
@@ -672,7 +672,7 @@ When we move off Expo Go, the upgrade path is:
 
 Scheduled todos (those with a specific time via `hasScheduledTime(dueAt)`) can mirror to the device calendar when `calendarSyncEnabled` is on in `stores/preferences.store.ts`.
 
-- **Permission + dedicated calendar** — `lib/infrastructure/calendar.ts` requests access, finds or creates a **"Mental Scrapbook"** calendar (never writes into the user's primary calendar).
+- **Permission + dedicated calendar** — `lib/infrastructure/calendar.ts` requests access, finds or creates a **"Murmur"** calendar (never writes into the user's primary calendar).
 - **On create** — `todos.service.createTodoForCurrentUser` creates a 30‑min event and stores `calendar_event_id` on the row.
 - **On complete** — deletes the native event and clears `calendar_event_id`.
 - **Toggle on** (`app/(app)/profile/calendar.tsx`) — `backfillCalendarForCurrentUser()` adds events for existing open scheduled todos; **toggle off** — `clearCalendarForCurrentUser()` removes all tracked events.

@@ -55,7 +55,7 @@ export default function RootLayout() {
     if (!fontsLoaded || authStatus === 'bootstrapping') {
         return (
             <View style={styles.splash}>
-                <Text variant="display">Mental Scrapbook</Text>
+                <Text variant="display">Murmur</Text>
             </View>
         )
     }

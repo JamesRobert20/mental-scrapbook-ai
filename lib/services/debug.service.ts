@@ -65,7 +65,7 @@ export async function buildDatabaseSnapshot(): Promise<Snapshot> {
 
 export async function writeSnapshotToFile(): Promise<File> {
     const snapshot = await buildDatabaseSnapshot()
-    const file = new File(Paths.document, 'mental-scrapbook-snapshot.json')
+    const file = new File(Paths.document, 'murmur-snapshot.json')
     if (file.exists) file.delete()
     file.create()
     file.write(JSON.stringify(snapshot, null, 2))

@@ -36,7 +36,7 @@ const PERKS: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string
     {
         icon: 'sparkles-outline',
         title: 'Turn emails into todos',
-        body: 'Mental Scrapbook suggests tasks from recent messages so nothing slips through.'
+        body: 'Murmur suggests tasks from recent messages so nothing slips through.'
     },
     {
         icon: 'eye-outline',
@@ -207,8 +207,8 @@ export default function SyncGmailScreen() {
                 </Text>
                 <Text variant="body" muted style={styles.heroBody}>
                     {connection
-                        ? 'Mental Scrapbook can now suggest todos from your recent emails.'
-                        : 'Let Mental Scrapbook quietly turn the emails you care about into todos.'}
+                        ? 'Murmur can now suggest todos from your recent emails.'
+                        : 'Let Murmur quietly turn the emails you care about into todos.'}
                 </Text>
             </View>
 
@@ -284,10 +284,10 @@ export default function SyncGmailScreen() {
                             color={Colors.light.onSurfaceVariant}
                         />
                         <Text variant="bodySmall" muted style={styles.noteText}>
-                            Mental Scrapbook only scans your inbox while the app is open.
-                            Background syncing needs a custom build (Expo Go can&apos;t
-                            run background tasks reliably). Open the app and we&apos;ll
-                            catch up instantly.
+                            Murmur only scans your inbox while the app is open. Background
+                            syncing needs a custom build (Expo Go can&apos;t run
+                            background tasks reliably). Open the app and we&apos;ll catch
+                            up instantly.
                         </Text>
                     </View>
                 </>

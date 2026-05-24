@@ -1,9 +1,9 @@
-// Thin wrapper around expo-calendar. Owns the "Mental Scrapbook" calendar so
+// Thin wrapper around expo-calendar. Owns the "Murmur" calendar so
 // our events stay isolated from the user's primary calendar.
 import * as Calendar from 'expo-calendar'
 import { Platform } from 'react-native'
 
-const CALENDAR_TITLE = 'Mental Scrapbook'
+const CALENDAR_TITLE = 'Murmur'
 const CALENDAR_COLOR = '#181916'
 const DEFAULT_DURATION_MS = 30 * 60 * 1000
 

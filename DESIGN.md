@@ -1,4 +1,4 @@
-# Mental Scrapbook — Design System
+# Murmur — Design System
 
 > Source of truth for the visual language. The implementation lives in `constants/theme.ts` and `components/ui/**`. If you find yourself reaching for a literal value or hand-rolling a primitive, pull from this doc first.
 
@@ -6,7 +6,7 @@
 
 ## 1. Voice
 
-Mental Scrapbook is a **calm, editorial journal that listens.** Every screen should feel:
+Murmur is a **calm, editorial journal that listens.** Every screen should feel:
 
 - **Quiet.** Generous whitespace, a single focal element per view, no decoration that doesn't earn its place.
 - **Warm.** Off-white paper, near-black ink, soft pastel accents — never cold gray-on-white.
@@ -97,7 +97,7 @@ Use the `<Text variant="…">` prop. Never set `fontSize`/`fontFamily` directly 
 
 | Variant     | Family / weight       | Size / line                       | Use                                                              |
 | ----------- | --------------------- | --------------------------------- | ---------------------------------------------------------------- |
-| `display`   | Playfair 600 SemiBold | 32 / 38, -0.5 tracking            | The screen brand wordmark ("Mental Scrapbook"). One per screen.  |
+| `display`   | Playfair 600 SemiBold | 32 / 38, -0.5 tracking            | The screen brand wordmark ("Murmur"). One per screen.            |
 | `headline`  | Playfair 500 Medium   | 24 / 32                           | Page titles, screen hero titles, profile name.                   |
 | `title`     | Playfair 500 Medium   | 20 / 28                           | Section headers (Important, Schedule, General).                  |
 | `body`      | Hanken 400 Regular    | 16 / 26                           | Default copy. Cards, settings rows, chat bubbles.                |
@@ -242,7 +242,7 @@ All primitives live in `components/ui/**`. Composed pieces live in feature folde
 
 ### Layout (`components/layout/`)
 
-- **`<ScreenHeader />`** — center-aligned 28px Playfair "Mental Scrapbook" wordmark. One per top-level tab screen.
+- **`<ScreenHeader />`** — center-aligned 28px Playfair "Murmur" wordmark. One per top-level tab screen.
 
 ---
 

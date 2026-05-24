@@ -1,6 +1,6 @@
 {
     "expo": {
-        "name": "mental-scrapbook-ai",
+        "name": "Murmur",
         "slug": "mental-scrapbook-ai",
         "owner": "jamesmtendamema",
         "version": "1.0.0",
@@ -47,7 +47,7 @@
             [
                 "expo-calendar",
                 {
-                    "calendarPermission": "Mental Scrapbook adds your scheduled todos to your calendar so you'll see them next to your other plans."
+                    "calendarPermission": "Murmur adds your scheduled todos to your calendar so you'll see them next to your other plans."
                 }
             ]
         ],
