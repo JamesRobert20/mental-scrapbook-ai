@@ -29,3 +29,16 @@ export async function upsertGmailToken(
 export async function deleteGmailTokenForUser(userId: string): Promise<void> {
     await db.delete(gmailTokens).where(eq(gmailTokens.userId, userId))
 }
+
+export async function updateGmailSyncCursor(
+    userId: string,
+    cursor: { lastSyncedAt: string; lastSeenMessageId: string | null }
+): Promise<void> {
+    await db
+        .update(gmailTokens)
+        .set({
+            lastSyncedAt: cursor.lastSyncedAt,
+            lastSeenMessageId: cursor.lastSeenMessageId
+        })
+        .where(eq(gmailTokens.userId, userId))
+}

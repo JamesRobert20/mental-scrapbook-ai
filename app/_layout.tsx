@@ -19,6 +19,7 @@ import { StyleSheet, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import 'react-native-reanimated'
 
+import NotificationBanner from '@/components/ui/notification-banner'
 import Text from '@/components/ui/text'
 import { useAuthBootstrap } from '@/hooks/use-auth-bootstrap'
 import QueryProvider from '@/lib/providers/query-provider'
@@ -72,6 +73,7 @@ export default function RootLayout() {
                     <Stack.Screen name="(auth)" />
                     <Stack.Screen name="(app)" />
                 </Stack>
+                <NotificationBanner />
                 <StatusBar style="dark" />
             </QueryProvider>
         </GestureHandlerRootView>

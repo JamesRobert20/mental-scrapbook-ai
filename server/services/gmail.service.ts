@@ -74,17 +74,51 @@ const candidateSchema = z.object({
         .max(5)
 })
 
+export type ExtractTodoCandidatesResult = {
+    candidates: TodoCandidate[]
+    newestMessageId: string | null
+    scanned: number
+    skippedReason?: 'no-new-messages' | 'inbox-empty'
+}
+
 export async function extractTodoCandidates(input: {
     accessToken: string
     since?: string
-}): Promise<{ candidates: TodoCandidate[] }> {
+    lastSeenMessageId?: string | null
+}): Promise<ExtractTodoCandidatesResult> {
     const query = input.since
         ? `newer_than:7d after:${input.since}`
         : 'newer_than:7d -category:promotions -category:social -category:updates'
 
     const ids = await listMessageIds(input.accessToken, query, 15)
+
+    if (ids.length === 0) {
+        return {
+            candidates: [],
+            newestMessageId: null,
+            scanned: 0,
+            skippedReason: 'inbox-empty'
+        }
+    }
+
+    const newestMessageId = ids[0] ?? null
+
+    if (input.lastSeenMessageId && ids[0] === input.lastSeenMessageId) {
+        return {
+            candidates: [],
+            newestMessageId,
+            scanned: 0,
+            skippedReason: 'no-new-messages'
+        }
+    }
+
+    const trimmedIds = input.lastSeenMessageId
+        ? ids.slice(0, Math.max(1, ids.indexOf(input.lastSeenMessageId)))
+        : ids
+    const idsToScan = trimmedIds.length === 0 ? ids : trimmedIds
+
     const messages = await Promise.all(
-        ids.map(id => getMessageMetadata(input.accessToken, id))
+        idsToScan.map(id => getMessageMetadata(input.accessToken, id))
     )
 
     const summary = messages
@@ -97,7 +131,12 @@ export async function extractTodoCandidates(input: {
         .join('\n\n')
 
     if (!summary) {
-        return { candidates: [] }
+        return {
+            candidates: [],
+            newestMessageId,
+            scanned: idsToScan.length,
+            skippedReason: 'inbox-empty'
+        }
     }
 
     const today = new Date().toISOString()
@@ -147,15 +186,24 @@ Return at most 5 todos.`
         source: 'gmail' as const
     }))
 
-    return { candidates }
+    return { candidates, newestMessageId, scanned: idsToScan.length }
 }
 
 export async function handleGmailSyncRequest(request: Request): Promise<Response> {
     const accessToken = bearerToken(request)
-    const body = (await request.json().catch(() => ({}))) as { since?: string }
-    const { candidates } = await extractTodoCandidates({
+    const body = (await request.json().catch(() => ({}))) as {
+        since?: string
+        lastSeenMessageId?: string | null
+    }
+    const result = await extractTodoCandidates({
         accessToken,
-        since: body.since
+        since: body.since,
+        lastSeenMessageId: body.lastSeenMessageId ?? null
     })
-    return Response.json({ todos: candidates })
+    return Response.json({
+        todos: result.candidates,
+        newestMessageId: result.newestMessageId,
+        scanned: result.scanned,
+        skippedReason: result.skippedReason ?? null
+    })
 }

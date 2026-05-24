@@ -7,8 +7,13 @@ import {
     setGmailRefreshToken
 } from '@/lib/infrastructure/secure-store'
 import { mapGmailTokenRow } from '@/lib/models/gmail-token.model'
+import type { Todo } from '@/lib/models/todo.model'
 import * as gmailQueries from '@/lib/queries/gmail-tokens.queries'
 import { getCurrentUser } from '@/lib/services/auth.service'
+import {
+    createTodoForCurrentUser,
+    listTodosForCurrentUser
+} from '@/lib/services/todos.service'
 import { IntegrationError, ValidationError } from '@/lib/types/errors'
 
 export type GmailTokensResponse = {
@@ -18,14 +23,26 @@ export type GmailTokensResponse = {
     email: string | null
 }
 
+export type GmailSyncCandidate = {
+    title: string
+    notes?: string
+    priority: 'low' | 'medium' | 'high'
+    dueAt?: string
+    source: 'gmail'
+}
+
 export type GmailSyncResponse = {
-    todos: {
-        title: string
-        notes?: string
-        priority: 'low' | 'medium' | 'high'
-        dueAt?: string
-        source: 'gmail'
-    }[]
+    todos: GmailSyncCandidate[]
+    newestMessageId: string | null
+    scanned: number
+    skippedReason: 'no-new-messages' | 'inbox-empty' | null
+}
+
+export type GmailSyncRunResult = {
+    created: Todo[]
+    skipped: number
+    newestMessageId: string | null
+    skippedReason: GmailSyncResponse['skippedReason']
 }
 
 export async function getGmailConnectionForCurrentUser() {
@@ -114,6 +131,7 @@ export async function getValidGmailAccessToken(): Promise<string> {
 
 export async function syncGmailTodos(input?: {
     since?: string
+    lastSeenMessageId?: string | null
 }): Promise<GmailSyncResponse> {
     const token = await getValidGmailAccessToken()
 
@@ -131,6 +149,68 @@ export async function syncGmailTodos(input?: {
     }
 
     return response.json() as Promise<GmailSyncResponse>
+}
+
+function normalizeTitle(title: string): string {
+    return title
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
+export async function runGmailSyncForCurrentUser(): Promise<GmailSyncRunResult> {
+    const user = await getCurrentUser()
+    if (!user) {
+        throw new ValidationError('You must be signed in')
+    }
+
+    const tokenRow = await gmailQueries.findGmailTokenForUser(user.id)
+    if (!tokenRow) {
+        throw new IntegrationError('Gmail is not connected', 'GMAIL_NOT_CONNECTED')
+    }
+
+    const response = await syncGmailTodos({
+        lastSeenMessageId: tokenRow.lastSeenMessageId ?? null
+    })
+
+    const result: GmailSyncRunResult = {
+        created: [],
+        skipped: 0,
+        newestMessageId: response.newestMessageId,
+        skippedReason: response.skippedReason
+    }
+
+    if (response.todos.length > 0) {
+        const existing = await listTodosForCurrentUser()
+        const existingTitles = new Set(existing.map(t => normalizeTitle(t.title)))
+        const cycleTitles = new Set<string>()
+
+        for (const candidate of response.todos) {
+            const key = normalizeTitle(candidate.title)
+            if (!key) continue
+            if (existingTitles.has(key) || cycleTitles.has(key)) {
+                result.skipped += 1
+                continue
+            }
+            cycleTitles.add(key)
+            const todo = await createTodoForCurrentUser({
+                title: candidate.title,
+                notes: candidate.notes,
+                priority: candidate.priority,
+                dueAt: candidate.dueAt,
+                source: 'gmail'
+            })
+            result.created.push(todo)
+        }
+    }
+
+    await gmailQueries.updateGmailSyncCursor(user.id, {
+        lastSyncedAt: new Date().toISOString(),
+        lastSeenMessageId: response.newestMessageId ?? tokenRow.lastSeenMessageId ?? null
+    })
+
+    return result
 }
 
 export async function exchangeGmailAuthCode(params: {

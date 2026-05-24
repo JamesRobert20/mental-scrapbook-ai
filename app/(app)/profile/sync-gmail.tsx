@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import Constants from 'expo-constants'
 import * as Linking from 'expo-linking'
 import * as WebBrowser from 'expo-web-browser'
@@ -9,12 +9,19 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import Button from '@/components/ui/button'
 import Text from '@/components/ui/text'
+import ToggleRow from '@/components/profile/toggle-row'
+import { useGmailSync } from '@/hooks/mutations/use-gmail-sync'
 import { useGmailStatus } from '@/hooks/queries/use-gmail-status'
 import {
     disconnectGmailForCurrentUser,
     exchangeGmailAuthCode,
     persistGmailTokensForCurrentUser
 } from '@/lib/services/gmail.service'
+import {
+    setGmailAutoSyncEnabled,
+    useGmailAutoSyncEnabled,
+    useGmailAutoSyncIntervalSeconds
+} from '@/stores/preferences.store'
 import { Colors, Radii, Spacing } from '@/constants/theme'
 
 WebBrowser.maybeCompleteAuthSession()
@@ -66,11 +73,27 @@ function friendlyError(message: string): string {
     return "We couldn't connect to Gmail. Please try again."
 }
 
+function formatRelativeTime(iso: string | null | undefined): string {
+    if (!iso) return 'Never'
+    const diffMs = Date.now() - new Date(iso).getTime()
+    if (diffMs < 30_000) return 'Just now'
+    const minutes = Math.floor(diffMs / 60_000)
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes} min ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+}
+
 export default function SyncGmailScreen() {
     const queryClient = useQueryClient()
     const { data: connection, isLoading } = useGmailStatus()
     const [error, setError] = useState<string | null>(null)
     const [isAuthing, setIsAuthing] = useState(false)
+    const autoSyncEnabled = useGmailAutoSyncEnabled()
+    const autoSyncInterval = useGmailAutoSyncIntervalSeconds()
+    const { mutate: syncNow, isPending: isSyncing } = useGmailSync()
 
     const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_OAUTH_CLIENT_ID ?? ''
 
@@ -190,25 +213,84 @@ export default function SyncGmailScreen() {
             </View>
 
             {connection ? (
-                <View style={styles.statusCard}>
-                    <View style={styles.statusRow}>
-                        <View style={styles.statusBadge}>
-                            <Ionicons
-                                name="checkmark"
-                                size={16}
-                                color={Colors.light.onPrimary}
-                            />
+                <>
+                    <View style={styles.statusCard}>
+                        <View style={styles.statusRow}>
+                            <View style={styles.statusBadge}>
+                                <Ionicons
+                                    name="checkmark"
+                                    size={16}
+                                    color={Colors.light.onPrimary}
+                                />
+                            </View>
+                            <View style={styles.statusBody}>
+                                <Text variant="label" muted>
+                                    Signed in as
+                                </Text>
+                                <Text variant="body" selectable>
+                                    {connection.email}
+                                </Text>
+                            </View>
                         </View>
-                        <View style={styles.statusBody}>
-                            <Text variant="label" muted>
-                                Signed in as
-                            </Text>
-                            <Text variant="body" selectable>
-                                {connection.email}
-                            </Text>
+                        <View style={styles.divider} />
+                        <View style={styles.statusRow}>
+                            <View style={styles.statusBubble}>
+                                <Ionicons
+                                    name="sync-outline"
+                                    size={16}
+                                    color={Colors.light.onSurfaceVariant}
+                                />
+                            </View>
+                            <View style={styles.statusBody}>
+                                <Text variant="label" muted>
+                                    Last scanned
+                                </Text>
+                                <Text variant="body">
+                                    {isSyncing
+                                        ? 'Scanning…'
+                                        : formatRelativeTime(connection.lastSyncedAt)}
+                                </Text>
+                            </View>
+                            <Pressable
+                                onPress={() => syncNow()}
+                                disabled={isSyncing}
+                                style={({ pressed }) => [
+                                    styles.syncButton,
+                                    pressed && styles.syncButtonPressed
+                                ]}
+                                accessibilityLabel="Scan inbox now"
+                            >
+                                <Text variant="bodySmall" style={styles.syncButtonText}>
+                                    {isSyncing ? '…' : 'Scan now'}
+                                </Text>
+                            </Pressable>
                         </View>
                     </View>
-                </View>
+
+                    <View style={styles.toggleCard}>
+                        <ToggleRow
+                            icon="flash-outline"
+                            label="Auto-scan while open"
+                            description={`Checks every ${autoSyncInterval}s when the app is on screen.`}
+                            value={autoSyncEnabled}
+                            onValueChange={setGmailAutoSyncEnabled}
+                        />
+                    </View>
+
+                    <View style={styles.noteCard}>
+                        <Ionicons
+                            name="information-circle-outline"
+                            size={18}
+                            color={Colors.light.onSurfaceVariant}
+                        />
+                        <Text variant="bodySmall" muted style={styles.noteText}>
+                            Mental Scrapbook only scans your inbox while the app is open.
+                            Background syncing needs a custom build (Expo Go can&apos;t
+                            run background tasks reliably). Open the app and we&apos;ll
+                            catch up instantly.
+                        </Text>
+                    </View>
+                </>
             ) : (
                 <View style={styles.perks}>
                     {PERKS.map(perk => (
@@ -307,7 +389,8 @@ const styles = StyleSheet.create({
         borderCurve: 'continuous',
         borderWidth: 1,
         borderColor: Colors.light.outline,
-        padding: Spacing.lg
+        padding: Spacing.lg,
+        gap: Spacing.md
     },
     statusRow: {
         flexDirection: 'row',
@@ -322,9 +405,56 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
+    statusBubble: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: Colors.light.surfaceContainer,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
     statusBody: {
         flex: 1,
         gap: 2
+    },
+    divider: {
+        height: 1,
+        backgroundColor: Colors.light.outline,
+        opacity: 0.5
+    },
+    syncButton: {
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        borderRadius: Radii.pill,
+        borderWidth: 1,
+        borderColor: Colors.light.outline,
+        backgroundColor: Colors.light.surfaceContainer
+    },
+    syncButtonPressed: {
+        opacity: 0.6
+    },
+    syncButtonText: {
+        fontFamily: 'HankenGrotesk_600SemiBold'
+    },
+    toggleCard: {
+        backgroundColor: Colors.light.surface,
+        borderRadius: Radii.lg,
+        borderCurve: 'continuous',
+        borderWidth: 1,
+        borderColor: Colors.light.outline,
+        overflow: 'hidden'
+    },
+    noteCard: {
+        flexDirection: 'row',
+        gap: Spacing.sm,
+        backgroundColor: Colors.light.surfaceContainer,
+        borderRadius: Radii.md,
+        borderCurve: 'continuous',
+        padding: Spacing.md
+    },
+    noteText: {
+        flex: 1,
+        lineHeight: 18
     },
     perks: {
         gap: Spacing.lg,

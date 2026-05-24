@@ -38,7 +38,9 @@ expoDb.execSync(`
     access_token TEXT NOT NULL,
     refresh_token TEXT NOT NULL,
     expires_at TEXT NOT NULL,
-    email TEXT NOT NULL
+    email TEXT NOT NULL,
+    last_synced_at TEXT,
+    last_seen_message_id TEXT
   );
 `)
 
@@ -47,6 +49,14 @@ for (const column of ['category', 'time_label']) {
         expoDb.execSync(`ALTER TABLE todos DROP COLUMN ${column};`)
     } catch {
         // column already absent on fresh installs
+    }
+}
+
+for (const column of ['last_synced_at TEXT', 'last_seen_message_id TEXT']) {
+    try {
+        expoDb.execSync(`ALTER TABLE gmail_tokens ADD COLUMN ${column};`)
+    } catch {
+        // column already present on fresh installs
     }
 }
 

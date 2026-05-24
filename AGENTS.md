@@ -591,6 +591,28 @@ Auth is **client-local** because `expo-sqlite` lives on the device (see §1.1). 
 - Show sync status (connected email, last sync timestamp) via a React Query hook that reads `gmail_tokens`.
 - "Disconnect" button: clear secure-store + delete `gmail_tokens` row.
 
+### 11.1 Auto-sync & notifications (foreground-only)
+
+We poll Gmail and fire reminders **only while the app is in the foreground**. This is a deliberate, hackathon-scope choice — Expo Go cannot run real background tasks:
+
+- `expo-background-task` / `expo-task-manager` require a custom dev/native build and are explicitly disallowed in Expo Go.
+- Remote push (`expo-notifications` push tokens) is removed from Expo Go on SDK 53+ for Android; only local notifications work, and only while the OS keeps the JS runtime alive.
+- A separate cron / serverless worker would need its own hosted backend (also out of scope per §1 / §1.1) plus push infrastructure.
+
+What we ship in Expo Go:
+
+- **`hooks/use-gmail-auto-sync.ts`** — `setInterval` while `AppState === 'active'`, gated by the `gmailAutoSyncEnabled` preference. Resyncs immediately on resume. Default cadence: 60s (configurable in `stores/preferences.store.ts`).
+- **Server-side dedupe** — `app/api/gmail/sync+api.ts` accepts `lastSeenMessageId` and short-circuits before the LLM call when the newest inbox message hasn't changed. Persist the new cursor in `gmail_tokens.last_seen_message_id` after each sync (no LLM tokens burned on quiet inboxes).
+- **Client-side dedupe** — `runGmailSyncForCurrentUser` normalizes titles and skips creating a todo when an open one already exists.
+- **In-app banner** — `components/ui/notification-banner.tsx` + `stores/banner.store.ts` for new important todos or reminder messages. Always works regardless of OS permission.
+- **Local notifications** — `lib/infrastructure/notifications.ts` wraps `expo-notifications`. `useTodoReminders` schedules one per upcoming scheduled todo (`hasScheduledTime(dueAt)`) within the next 24h, using the `reminderLeadMinutes` preference. Permission is requested lazily.
+
+When we move off Expo Go, the upgrade path is:
+
+1. Add `expo-background-task` (replaces deprecated `expo-background-fetch`) and register a task that calls `runGmailSyncForCurrentUser`. Minimum interval ≈ 15 min.
+2. Switch `expo-notifications` to remote push by adding a push token registration on sign-in and a `+api` endpoint that triggers Expo Push from the server when a server-side sync (cron) finds new important emails.
+3. Keep the foreground hook as the warm-path; background task is the cold-path.
+
 ---
 
 ## 12. Design system

@@ -38,5 +38,7 @@ export const gmailTokens = sqliteTable('gmail_tokens', {
     accessToken: text('access_token').notNull(),
     refreshToken: text('refresh_token').notNull(),
     expiresAt: text('expires_at').notNull(),
-    email: text('email').notNull()
+    email: text('email').notNull(),
+    lastSyncedAt: text('last_synced_at'),
+    lastSeenMessageId: text('last_seen_message_id')
 })

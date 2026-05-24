@@ -10,7 +10,8 @@
         "web": "expo start --web",
         "lint": "expo lint",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "rtc": "pnpm format && pnpm lint && pnpm typecheck"
     },
     "dependencies": {
         "@ai-sdk/openai": "^3.0.65",
@@ -40,6 +41,7 @@
         "expo-image": "~3.0.11",
         "expo-linear-gradient": "~15.0.8",
         "expo-linking": "~8.0.11",
+        "expo-notifications": "~0.32.17",
         "expo-router": "~6.0.23",
         "expo-secure-store": "~15.0.8",
         "expo-speech": "~14.0.8",
