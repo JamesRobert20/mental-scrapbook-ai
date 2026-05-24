@@ -1,8 +1,8 @@
 # Mental Scrapbook
 
-I lose four todos between meetings every day. The kind you remember in the hallway and forget by the time you've sat back down. Mental Scrapbook is the smallest possible fix: hold the mic, talk through them, and they're on your day before the next call starts. Connect Gmail and the genuinely actionable emails land there too, with the newsletter noise stripped out.
+My head holds about four ideas at once before they start falling out. The grocery item overwrites the email I owe someone, which overwrites the friend's birthday on Saturday. Mental Scrapbook is the smallest possible fix: hold the mic, talk through them, and they land on your day before the next thing crowds them out. Connect Gmail and the few emails that actually need an action show up there too — newsletters and receipts stay where they belong.
 
-Built in a weekend for the SAIT Hackathon.
+Built in a weekend for the SAIT Hackathon. Most of what I forget isn't important. Enough of it is that _"I'll remember"_ stopped being a strategy a long time ago.
 
 **Demo target:** Expo Go on a physical device (no custom native builds, no separate backend).
 
