@@ -1,19 +1,17 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import CalendarStrip from '@/components/insights/calendar-strip';
+import PriorityCard from '@/components/insights/priority-card';
 import ScheduleTimeline from '@/components/insights/schedule-timeline';
 import SectionHeader from '@/components/insights/section-header';
-import TodoCard from '@/components/insights/todo-card';
+import TodoChip from '@/components/insights/todo-chip';
 import ScreenHeader from '@/components/layout/screen-header';
 import Text from '@/components/ui/text';
-import { useTodos } from '@/hooks/queries/use-todos';
+import { useInsightsTodos } from '@/hooks/queries/use-insights-todos';
 import { Colors, Spacing } from '@/constants/theme';
 
 export default function InsightsScreen() {
-  const { data: allTodos = [], isLoading } = useTodos();
-  const important = allTodos.filter((t) => t.category === 'important');
-  const schedule = allTodos.filter((t) => t.category === 'schedule');
-  const general = allTodos.filter((t) => t.category === 'general');
+  const { important, schedule, general, isLoading } = useInsightsTodos();
 
   const scheduleItems = schedule.map((t) => ({
     id: t.id,
@@ -21,52 +19,73 @@ export default function InsightsScreen() {
     title: t.title,
   }));
 
-  const fallbackSchedule = [
-    { id: '1', timeLabel: '9:00 am', title: 'Get coffee' },
-    { id: '2', timeLabel: '11:45 am', title: 'Drop son at school' },
-  ];
-
   return (
     <View style={styles.root}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         contentInsetAdjustmentBehavior="automatic">
         <ScreenHeader />
-        <View style={styles.section}>
-          <SectionHeader title="Calendar" />
+
+        <View style={styles.calendar}>
           <CalendarStrip />
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Important" />
+          <SectionHeader title="Important" count={important.length} />
           {isLoading ? (
-            <Text muted>Loading…</Text>
+            <Text variant="bodySmall" muted>
+              Loading…
+            </Text>
           ) : important.length > 0 ? (
-            important.map((todo) => <TodoCard key={todo.id} title={todo.title} />)
+            <View style={styles.cardStack}>
+              {important.map((todo) => (
+                <PriorityCard
+                  key={todo.id}
+                  title={todo.title}
+                  notes={todo.notes}
+                  timeLabel={todo.timeLabel}
+                />
+              ))}
+            </View>
           ) : (
-            <>
-              <TodoCard title="Pickup dog" />
-              <TodoCard title="Finish project" />
-            </>
+            <Text variant="bodySmall" muted>
+              Nothing important for this day.
+            </Text>
           )}
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="Schedule" />
-          <ScheduleTimeline items={scheduleItems.length > 0 ? scheduleItems : fallbackSchedule} />
+          <SectionHeader title="Schedule" count={schedule.length} />
+          {isLoading ? (
+            <Text variant="bodySmall" muted>
+              Loading…
+            </Text>
+          ) : scheduleItems.length > 0 ? (
+            <ScheduleTimeline items={scheduleItems} />
+          ) : (
+            <Text variant="bodySmall" muted>
+              Nothing scheduled for this day.
+            </Text>
+          )}
         </View>
 
         <View style={styles.section}>
-          <SectionHeader title="General Todos" />
-          <View style={styles.generalRow}>
-            {(general.length > 0 ? general : [{ id: 'g1', title: 'Clean garage' }, { id: 'g2', title: 'Go to gym' }]).map(
-              (todo) => (
-                <View key={todo.id} style={styles.generalCell}>
-                  <TodoCard title={todo.title} compact />
-                </View>
-              ),
-            )}
-          </View>
+          <SectionHeader title="General" count={general.length} />
+          {isLoading ? (
+            <Text variant="bodySmall" muted>
+              Loading…
+            </Text>
+          ) : general.length > 0 ? (
+            <View style={styles.chipWrap}>
+              {general.map((todo) => (
+                <TodoChip key={todo.id} title={todo.title} />
+              ))}
+            </View>
+          ) : (
+            <Text variant="bodySmall" muted>
+              No general todos for this day.
+            </Text>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -80,16 +99,19 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: Spacing.screenPadding,
-    paddingBottom: 120,
+    paddingBottom: 140,
+    gap: Spacing.xl,
+  },
+  calendar: {
+    marginTop: -Spacing.sm,
   },
   section: {
-    marginBottom: Spacing.md,
+    gap: 0,
   },
-  generalRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
+  cardStack: {
+    gap: Spacing.sm + 2,
   },
-  generalCell: {
-    flex: 1,
+  chipWrap: {
+    gap: Spacing.sm,
   },
 });

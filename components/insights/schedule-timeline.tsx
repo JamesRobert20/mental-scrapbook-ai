@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import Text from '@/components/ui/text';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radii, Spacing } from '@/constants/theme';
 
 type ScheduleItem = {
   id: string;
@@ -19,11 +19,14 @@ export default function ScheduleTimeline({ items }: Props) {
       <View style={styles.line} />
       {items.map((item) => (
         <View key={item.id} style={styles.row}>
-          <View style={styles.dot} />
-          <View style={styles.content}>
-            <Text variant="body">
-              <Text style={styles.time}>{item.timeLabel}</Text>
-              {' — '}
+          <View style={styles.markerWrap}>
+            <View style={styles.dot} />
+          </View>
+          <View style={styles.card}>
+            <Text variant="bodySmall" style={styles.time}>
+              {item.timeLabel}
+            </Text>
+            <Text variant="body" selectable style={styles.title}>
               {item.title}
             </Text>
           </View>
@@ -35,14 +38,14 @@ export default function ScheduleTimeline({ items }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
-    paddingLeft: Spacing.md,
-    gap: Spacing.lg,
+    paddingLeft: 4,
+    gap: Spacing.md,
   },
   line: {
     position: 'absolute',
-    left: 6,
-    top: 8,
-    bottom: 8,
+    left: 9,
+    top: 14,
+    bottom: 14,
     width: 1,
     backgroundColor: Colors.light.outline,
   },
@@ -51,17 +54,33 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: Spacing.md,
   },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.light.outlineStrong,
-    marginTop: 4,
+  markerWrap: {
+    width: 11,
+    paddingTop: 14,
+    alignItems: 'center',
   },
-  content: {
+  dot: {
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: Colors.light.surface,
+    borderWidth: 2,
+    borderColor: Colors.light.primary,
+  },
+  card: {
     flex: 1,
+    backgroundColor: Colors.light.surface,
+    borderRadius: Radii.md,
+    borderCurve: 'continuous',
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.md,
+    gap: 2,
   },
   time: {
     fontFamily: 'PlayfairDisplay_500Medium',
+    color: Colors.light.onSurfaceVariant,
+  },
+  title: {
+    fontFamily: 'HankenGrotesk_500Medium',
   },
 });

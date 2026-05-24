@@ -226,7 +226,7 @@ server/                           # SERVER-ONLY. Imported only by +api.ts files.
 components/                       # reusable UI. Presentation layer only.
   ui/                             # atoms (button, input, card, pill-tab-bar, glass-pane, pulse)
   capture/                        # orb, mic-button, transcript-stream, tool-renderer
-  insights/                       # calendar-strip, schedule-item, todo-card, section-header
+  insights/                       # calendar-strip, schedule-timeline, priority-card, todo-chip, section-header
   profile/                        # section-row, avatar
   layout/                         # screen-shell, header
 
