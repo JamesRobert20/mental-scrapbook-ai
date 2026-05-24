@@ -1,8 +1,26 @@
 # Mental Scrapbook
 
-A serene, voice-first daily-planning assistant built with Expo. Hold the mic (or type), speak freely, and an AI agent transcribes your thoughts, creates structured todos, and replies in voice with on-screen transcription. Connect Gmail in Settings to turn emails into todos.
+I lose four todos between meetings every day. The kind you remember in the hallway and forget by the time you've sat back down. Mental Scrapbook is the smallest possible fix: hold the mic, talk through them, and they're on your day before the next call starts. Connect Gmail and the genuinely actionable emails land there too, with the newsletter noise stripped out.
 
-**Demo target:** Expo Go on a physical device (no custom native builds).
+Built in a weekend for the SAIT Hackathon.
+
+**Demo target:** Expo Go on a physical device (no custom native builds, no separate backend).
+
+## What's interesting under the hood
+
+If you only have time to read three files, read these:
+
+1. **Sentence-chunked streaming TTS** — `hooks/use-speaker.ts` + `server/services/speech.service.ts`. As the chat model streams, `lib/infrastructure/sentence-stream.ts` flushes one clause at a time into the TTS pipeline. Each `/api/speak` request starts immediately and runs in parallel; the server pipes OpenAI's mp3 body straight through (no `arrayBuffer()` buffering). The client plays them in order. First audio comes back roughly when the first sentence finishes — not when the whole reply is done.
+2. **Server-side LLM cost dedupe for Gmail** — `server/services/gmail.service.ts`. `gmail_tokens.last_seen_message_id` is the cursor; if the inbox head hasn't moved since the last sync, the route returns `[]` before Gemini sees a single token. Polling every 60s while the app is open costs roughly nothing on a quiet inbox.
+3. **Tool execution split** — `lib/ai/tools.ts` + `hooks/use-capture-chat.ts`. Tool _definitions_ live on the server agent (`server/ai/agent.ts`), but tools that touch device SQLite or secure-store (`createTodo`, `completeTodo`, `listTodos`, `pullGmailTodos`) execute on the client via `onToolCall`. The model never sees the DB; the device never sees the API key.
+
+Smaller things I'm proud of:
+
+- 16kHz mono recording in `hooks/use-recorder.ts` — ~4× smaller upload than the `HIGH_QUALITY` preset, with no loss in Whisper accuracy.
+- Whisper goes to Groq, not OpenAI — about 4–5× faster end-to-end (`server/integrations/groq/whisper.ts`).
+- Hand-rolled Expo `auth.expo.io/start` flow for Google OAuth in `app/(app)/profile/sync-gmail.tsx` — works in Expo Go without a custom build.
+- A todo's bucket (Important / Schedule / General) is **derived** from `priority` and `dueAt`, not stored. See `hooks/queries/use-insights-todos.ts`. Adding a new bucket is one filter, not a migration.
+- Foreground-only auto-sync with `AppState` + inflight guards in `hooks/use-gmail-auto-sync.ts`. Background tasks need a custom build (see [AGENTS.md §11.1](./AGENTS.md#111-auto-sync--notifications-foreground-only)) — we surface that limit in the UI instead of pretending.
 
 ## Prerequisites
 
@@ -19,7 +37,7 @@ pnpm install
 pnpm start
 ```
 
-Install [Expo Go](https://expo.dev/go) on your phone, then scan the QR code with your device's camera (iOS) or the Expo Go app (Android). It will open the project in Expo Go.
+Install [Expo Go](https://expo.dev/go) on your phone, then scan the QR code with your device's camera (iOS) or the Expo Go app (Android).
 
 ### Physical device + API routes
 
@@ -70,17 +88,19 @@ Optional: set `AI_GATEWAY_CHAT_MODEL` to override the default chat model (e.g. `
 
 ## Architecture (high level)
 
-- **Client:** Expo app — SQLite on device (users, sessions, todos), Zustand + React Query, voice via `expo-audio` / `expo-speech`.
-- **Server:** `app/api/**/+api.ts` thin handlers → `server/` (AI agent, Whisper, Gmail). No separate backend repo.
-- **AI:** Vercel AI SDK through AI Gateway; todo writes from tool calls run on the client (device DB).
+- **Client:** Expo app, SQLite on device (users, sessions, todos, Gmail tokens), Zustand + React Query, voice via `expo-audio`.
+- **Server:** `app/api/**/+api.ts` thin handlers delegating to `server/services/**`. No separate backend repo, no hosted DB.
+- **AI:** Vercel AI SDK through AI Gateway. Tool _definitions_ live on the server; tools that write to the device DB execute on the client via `useChat.onToolCall`.
 
-Layering, naming, and agent implementation rules live in **[AGENTS.md](./AGENTS.md)** (required reading for coding agents and contributors).
+Layering, naming, and the full set of conventions live in **[AGENTS.md](./AGENTS.md)** — required reading before contributing.
 
 ## Troubleshooting
 
 **`ERR_PNPM_IGNORED_BUILDS`** — Approve the package in `pnpm-workspace.yaml` under `allowBuilds:` (already set for `unrs-resolver` and `esbuild` in this repo).
 
 **Type errors on routes** — Run `pnpm start` once so Expo Router regenerates `.expo/types/router.d.ts`, or use constants from `lib/navigation/routes.ts`.
+
+**`pnpm start --tunnel` fails with `Cannot read properties of undefined (reading 'body')`** — Upstream `expo-ngrok` session-limit issue. Use `pnpm start --lan` instead (LAN works fine as long as your phone and dev machine share a network).
 
 ## License
 

@@ -12,5 +12,12 @@ export const signUpSchema = z.object({
     password: z.string().min(8)
 })
 
+export const updateProfileSchema = z.object({
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+    email: z.email('Enter a valid email')
+})
+
 export type SignInInput = z.infer<typeof signInSchema>
 export type SignUpInput = z.infer<typeof signUpSchema>
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>

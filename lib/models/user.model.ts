@@ -9,16 +9,21 @@ export type User = {
     email: string
     firstName: string
     lastName: string
+    avatarUri: string | null
     createdAt: string
 }
 
-export type SessionUser = Pick<User, 'id' | 'email' | 'firstName' | 'lastName'>
+export type SessionUser = Pick<
+    User,
+    'id' | 'email' | 'firstName' | 'lastName' | 'avatarUri'
+>
 
 export function mapUserRow(row: UserRow): SessionUser {
     return {
         id: row.id,
         email: row.email,
         firstName: row.firstName,
-        lastName: row.lastName
+        lastName: row.lastName,
+        avatarUri: row.avatarUri ?? null
     }
 }

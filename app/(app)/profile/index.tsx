@@ -1,10 +1,16 @@
+import { Ionicons } from '@expo/vector-icons'
+import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { useState } from 'react'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import ScreenHeader from '@/components/layout/screen-header'
 import SettingsRow from '@/components/profile/settings-row'
 import SettingsSection from '@/components/profile/settings-section'
 import Text from '@/components/ui/text'
+import { useUpdateAvatar } from '@/hooks/mutations/use-update-avatar'
+import { tap } from '@/lib/infrastructure/haptics'
 import { Routes } from '@/lib/navigation/routes'
 import { signOut } from '@/lib/services/auth.service'
 import { setAuthUnauthenticated, useAuthUser } from '@/stores/auth.store'
@@ -13,11 +19,47 @@ import { Colors, Spacing } from '@/constants/theme'
 export default function ProfileScreen() {
     const user = useAuthUser()
     const displayName = user ? user.firstName : 'Guest'
+    const updateAvatar = useUpdateAvatar()
+    const [isSigningOut, setIsSigningOut] = useState(false)
+    const [avatarError, setAvatarError] = useState<string | null>(null)
 
     const handleSignOut = async () => {
-        await signOut()
-        setAuthUnauthenticated()
-        router.replace(Routes.signIn)
+        if (isSigningOut) return
+        setIsSigningOut(true)
+        try {
+            await signOut()
+            setAuthUnauthenticated()
+            router.replace(Routes.signIn)
+        } finally {
+            setIsSigningOut(false)
+        }
+    }
+
+    const handlePickAvatar = async () => {
+        if (updateAvatar.isPending) return
+        tap('selection')
+        setAvatarError(null)
+
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+        if (!permission.granted) {
+            setAvatarError('Allow photo access to change your picture.')
+            return
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.85
+        })
+
+        if (result.canceled || !result.assets[0]) return
+
+        try {
+            await updateAvatar.mutateAsync(result.assets[0].uri)
+        } catch {
+            setAvatarError("We couldn't save that picture. Please try again.")
+        }
     }
 
     return (
@@ -28,15 +70,46 @@ export default function ProfileScreen() {
             >
                 <ScreenHeader />
                 <View style={styles.profile}>
-                    <View style={styles.avatar}>
-                        <Text variant="headline" style={styles.avatarText}>
-                            {displayName.charAt(0)}
-                        </Text>
-                    </View>
+                    <Pressable
+                        onPress={handlePickAvatar}
+                        disabled={updateAvatar.isPending}
+                        style={styles.avatarPressable}
+                        accessibilityRole="button"
+                        accessibilityLabel="Change profile picture"
+                    >
+                        <View style={styles.avatar}>
+                            {user?.avatarUri ? (
+                                <Image
+                                    source={{ uri: user.avatarUri }}
+                                    style={styles.avatarImage}
+                                    contentFit="cover"
+                                    transition={120}
+                                />
+                            ) : (
+                                <Text variant="headline" style={styles.avatarText}>
+                                    {displayName.charAt(0)}
+                                </Text>
+                            )}
+                            {updateAvatar.isPending ? (
+                                <View style={styles.avatarOverlay}>
+                                    <ActivityIndicator color={Colors.light.onPrimary} />
+                                </View>
+                            ) : null}
+                        </View>
+                        <View style={styles.pencilBubble}>
+                            <Ionicons
+                                name="pencil"
+                                size={14}
+                                color={Colors.light.onPrimary}
+                            />
+                        </View>
+                    </Pressable>
                     <Text variant="headline">{displayName}</Text>
-                    <Text variant="bodySmall" muted>
-                        Day 42 of mindful capture
-                    </Text>
+                    {avatarError ? (
+                        <Text variant="bodySmall" style={styles.avatarError}>
+                            {avatarError}
+                        </Text>
+                    ) : null}
                 </View>
 
                 <SettingsSection title="Account">
@@ -72,16 +145,28 @@ export default function ProfileScreen() {
 
                 <SettingsSection title="Session">
                     <SettingsRow
-                        label="Sign Out"
+                        label={isSigningOut ? 'Signing out…' : 'Sign Out'}
                         icon="log-out-outline"
                         onPress={handleSignOut}
                         destructive
+                        showChevron={false}
+                        disabled={isSigningOut}
+                        trailing={
+                            isSigningOut ? (
+                                <ActivityIndicator
+                                    color={Colors.light.error}
+                                    size="small"
+                                />
+                            ) : null
+                        }
                     />
                 </SettingsSection>
             </ScrollView>
         </View>
     )
 }
+
+const AVATAR_SIZE = 96
 
 const styles = StyleSheet.create({
     root: {
@@ -97,16 +182,48 @@ const styles = StyleSheet.create({
         gap: Spacing.sm,
         marginBottom: Spacing.xl
     },
+    avatarPressable: {
+        position: 'relative',
+        marginBottom: Spacing.sm
+    },
     avatar: {
-        width: 96,
-        height: 96,
-        borderRadius: 48,
+        width: AVATAR_SIZE,
+        height: AVATAR_SIZE,
+        borderRadius: AVATAR_SIZE / 2,
         backgroundColor: Colors.light.surfaceContainerHigh,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: Spacing.sm
+        overflow: 'hidden'
+    },
+    avatarImage: {
+        width: AVATAR_SIZE,
+        height: AVATAR_SIZE
+    },
+    avatarOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(20, 20, 20, 0.45)',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     avatarText: {
         fontSize: 36
+    },
+    pencilBubble: {
+        position: 'absolute',
+        right: 0,
+        bottom: 0,
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: Colors.light.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: Colors.light.background
+    },
+    avatarError: {
+        color: Colors.light.error,
+        textAlign: 'center',
+        marginTop: Spacing.xs
     }
 })

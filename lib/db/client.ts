@@ -15,6 +15,7 @@ expoDb.execSync(`
     password_hash TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    avatar_uri TEXT,
     created_at TEXT NOT NULL
   );
   CREATE TABLE IF NOT EXISTS sessions (
@@ -58,6 +59,12 @@ for (const column of ['last_synced_at TEXT', 'last_seen_message_id TEXT']) {
     } catch {
         // column already present on fresh installs
     }
+}
+
+try {
+    expoDb.execSync(`ALTER TABLE users ADD COLUMN avatar_uri TEXT;`)
+} catch {
+    // column already present on fresh installs
 }
 
 export const db = drizzle(expoDb, { schema })

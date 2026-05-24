@@ -12,7 +12,7 @@ const authStore = create<AuthState>(() => ({
     user: null
 }))
 
-const { setState } = authStore
+const { setState, getState } = authStore
 
 export const useAuthStatus = () => authStore(s => s.status)
 export const useAuthUser = () => authStore(s => s.user)
@@ -28,4 +28,9 @@ export function setAuthAuthenticated(user: SessionUser) {
 
 export function setAuthUnauthenticated() {
     setState({ status: 'unauthenticated', user: null })
+}
+
+export function updateAuthUser(user: SessionUser) {
+    if (getState().status !== 'authenticated') return
+    setState({ status: 'authenticated', user })
 }

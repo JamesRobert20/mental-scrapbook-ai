@@ -10,16 +10,31 @@ type Props = {
     icon: keyof typeof Ionicons.glyphMap
     onPress?: () => void
     destructive?: boolean
+    showChevron?: boolean
+    trailing?: React.ReactNode
+    disabled?: boolean
 }
 
-export default function SettingsRow({ label, icon, onPress, destructive }: Props) {
+export default function SettingsRow({
+    label,
+    icon,
+    onPress,
+    destructive,
+    showChevron = true,
+    trailing,
+    disabled
+}: Props) {
     const handlePress = () => {
         tap(destructive ? 'warning' : 'selection')
         onPress?.()
     }
 
     return (
-        <Pressable onPress={handlePress} style={styles.row}>
+        <Pressable
+            onPress={handlePress}
+            disabled={disabled}
+            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+        >
             <Ionicons
                 name={icon}
                 size={20}
@@ -31,11 +46,14 @@ export default function SettingsRow({ label, icon, onPress, destructive }: Props
             >
                 {label}
             </Text>
-            <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={Colors.light.onSurfaceVariant}
-            />
+            {trailing ??
+                (showChevron && !destructive ? (
+                    <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color={Colors.light.onSurfaceVariant}
+                    />
+                ) : null)}
         </Pressable>
     )
 }
@@ -47,6 +65,9 @@ const styles = StyleSheet.create({
         gap: Spacing.md,
         paddingVertical: Spacing.md,
         paddingHorizontal: Spacing.md
+    },
+    pressed: {
+        opacity: 0.6
     },
     label: {
         flex: 1

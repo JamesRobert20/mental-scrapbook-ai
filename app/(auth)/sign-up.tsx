@@ -81,7 +81,9 @@ export default function SignUpScreen() {
                             </Text>
                         ) : null}
                         <Button
-                            label="Create account"
+                            label={
+                                signUp.isPending ? 'Creating account…' : 'Create account'
+                            }
                             onPress={handleSignUp}
                             disabled={signUp.isPending}
                         />

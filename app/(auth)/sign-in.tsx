@@ -62,7 +62,7 @@ export default function SignInScreen() {
                             </Text>
                         ) : null}
                         <Button
-                            label="Sign in"
+                            label={signIn.isPending ? 'Signing in…' : 'Sign in'}
                             onPress={handleSignIn}
                             disabled={signIn.isPending}
                         />

@@ -26,3 +26,22 @@ export async function insertUser(row: typeof users.$inferInsert): Promise<UserRo
     }
     return created
 }
+
+export type UserUpdate = Partial<
+    Pick<typeof users.$inferInsert, 'firstName' | 'lastName' | 'email' | 'avatarUri'>
+>
+
+export async function updateUser(id: string, update: UserUpdate): Promise<UserRow> {
+    if (Object.keys(update).length === 0) {
+        const current = await findUserById(id)
+        if (!current) throw new Error('User not found')
+        return current
+    }
+
+    await db.update(users).set(update).where(eq(users.id, id))
+    const updated = await findUserById(id)
+    if (!updated) {
+        throw new Error('User not found after update')
+    }
+    return updated
+}

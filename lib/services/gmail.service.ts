@@ -85,7 +85,9 @@ export async function disconnectGmailForCurrentUser(): Promise<void> {
     await clearGmailTokens()
 }
 
-async function refreshGmailAccessTokenIfNeeded(): Promise<string> {
+const TOKEN_REFRESH_BUFFER_MS = 60_000
+
+async function refreshGmailAccessToken(): Promise<string> {
     const refreshToken = await getGmailRefreshToken()
     if (!refreshToken) {
         throw new IntegrationError('Gmail is not connected', 'GMAIL_NOT_CONNECTED')
@@ -122,27 +124,49 @@ async function refreshGmailAccessTokenIfNeeded(): Promise<string> {
     return data.accessToken
 }
 
-export async function getValidGmailAccessToken(): Promise<string> {
-    let token = await getGmailAccessToken()
-    if (token) return token
+async function isStoredTokenExpired(): Promise<boolean> {
+    const user = await getCurrentUser()
+    if (!user) return false
+    const row = await gmailQueries.findGmailTokenForUser(user.id)
+    if (!row?.expiresAt) return false
+    const expiresAt = new Date(row.expiresAt).getTime()
+    return Number.isFinite(expiresAt)
+        ? expiresAt - Date.now() <= TOKEN_REFRESH_BUFFER_MS
+        : false
+}
 
-    return refreshGmailAccessTokenIfNeeded()
+export async function getValidGmailAccessToken(): Promise<string> {
+    const token = await getGmailAccessToken()
+    if (token && !(await isStoredTokenExpired())) return token
+    return refreshGmailAccessToken()
+}
+
+async function postSyncOnce(
+    token: string,
+    body: Record<string, unknown>
+): Promise<Response> {
+    return fetch(apiUrl('/api/gmail/sync'), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+    })
 }
 
 export async function syncGmailTodos(input?: {
     since?: string
     lastSeenMessageId?: string | null
 }): Promise<GmailSyncResponse> {
-    const token = await getValidGmailAccessToken()
+    const body = input ?? {}
+    let token = await getValidGmailAccessToken()
+    let response = await postSyncOnce(token, body)
 
-    const response = await fetch(apiUrl('/api/gmail/sync'), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(input ?? {})
-    })
+    if (response.status === 401) {
+        token = await refreshGmailAccessToken()
+        response = await postSyncOnce(token, body)
+    }
 
     if (!response.ok) {
         throw new IntegrationError('Gmail sync failed', 'GMAIL_SYNC_FAILED')
