@@ -12,6 +12,7 @@ import type { ChatAgentUIMessage } from '@/lib/ai/chat-types';
 import { agentTools } from '@/lib/ai/tools';
 import { apiUrl } from '@/lib/infrastructure/api-url';
 import { tap } from '@/lib/infrastructure/haptics';
+import { extractSentences } from '@/lib/infrastructure/sentence-stream';
 import { syncGmailTodos } from '@/lib/services/gmail.service';
 import {
   completeTodoForCurrentUser,
@@ -24,8 +25,15 @@ import { setCaptureStatus } from '@/stores/capture.store';
 type AgentToolName = keyof typeof agentTools;
 
 type UseCaptureChatOptions = {
-  onAssistantText?: (text: string) => void;
+  onAssistantSentence?: (sentence: string) => void;
 };
+
+function messageText(message: ChatAgentUIMessage): string {
+  return message.parts
+    .filter((part) => part.type === 'text')
+    .map((part) => part.text)
+    .join('\n');
+}
 
 async function executeTool(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -62,8 +70,12 @@ async function executeTool(
 export function useCaptureChat(options: UseCaptureChatOptions = {}) {
   const queryClient = useQueryClient();
   const addToolOutputRef = useRef<ChatAddToolOutputFunction<ChatAgentUIMessage> | null>(null);
-  const onAssistantTextRef = useRef(options.onAssistantText);
-  onAssistantTextRef.current = options.onAssistantText;
+  const onAssistantSentenceRef = useRef(options.onAssistantSentence);
+  onAssistantSentenceRef.current = options.onAssistantSentence;
+  const lastEmittedRef = useRef<{ messageId: string; consumed: number }>({
+    messageId: '',
+    consumed: 0,
+  });
 
   const transportRef = useRef<DefaultChatTransport<ChatAgentUIMessage> | null>(null);
   if (!transportRef.current) {
@@ -97,14 +109,15 @@ export function useCaptureChat(options: UseCaptureChatOptions = {}) {
     },
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onFinish: ({ message }) => {
-      setCaptureStatus('idle');
-      const text = message.parts
-        .filter((part) => part.type === 'text')
-        .map((part) => part.text)
-        .join('\n')
-        .trim();
-      if (text) {
-        onAssistantTextRef.current?.(text);
+      const text = messageText(message);
+      const consumed =
+        lastEmittedRef.current.messageId === message.id ? lastEmittedRef.current.consumed : 0;
+      const tail = text.slice(consumed).trim();
+      if (tail) {
+        onAssistantSentenceRef.current?.(tail);
+        lastEmittedRef.current = { messageId: message.id, consumed: text.length };
+      } else if (text.length === 0) {
+        setCaptureStatus('idle');
       }
     },
     onError: () => {
@@ -113,11 +126,31 @@ export function useCaptureChat(options: UseCaptureChatOptions = {}) {
     },
   });
 
-  const { sendMessage } = chat;
+  const { sendMessage, messages } = chat;
 
   useEffect(() => {
     addToolOutputRef.current = chat.addToolOutput;
   }, [chat.addToolOutput]);
+
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== 'assistant') return;
+
+    const text = messageText(last);
+    if (lastEmittedRef.current.messageId !== last.id) {
+      lastEmittedRef.current = { messageId: last.id, consumed: 0 };
+    }
+    const fresh = text.slice(lastEmittedRef.current.consumed);
+    if (!fresh) return;
+
+    const { sentences, remainder } = extractSentences(fresh);
+    if (sentences.length === 0) return;
+
+    for (const sentence of sentences) {
+      onAssistantSentenceRef.current?.(sentence);
+    }
+    lastEmittedRef.current.consumed = text.length - remainder.length;
+  }, [messages]);
 
   async function submitText(text: string) {
     const trimmed = text.trim();

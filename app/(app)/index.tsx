@@ -50,7 +50,7 @@ export default function CaptureScreen() {
   }, []);
 
   const { messages, submitText, status: chatStatus } = useCaptureChat({
-    onAssistantText: speak,
+    onAssistantSentence: speak,
   });
 
   async function handleSendText() {
