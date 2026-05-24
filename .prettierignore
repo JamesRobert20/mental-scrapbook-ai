@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Cache
+.swc/
+.turbo/
+
+# Coverage
+coverage/
+
+# Environment
+.env*
+
+# Logs
+*.log
+
+# Yaml
+*.yml
+*.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.tsbuildinfo
+.nyc_output 

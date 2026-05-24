@@ -1,0 +1,78 @@
+import { Ionicons } from '@expo/vector-icons'
+import { Pressable, StyleSheet } from 'react-native'
+
+import Text from '@/components/ui/text'
+import { tap } from '@/lib/infrastructure/haptics'
+import { Colors, Spacing } from '@/constants/theme'
+
+type Props = {
+    label: string
+    icon: keyof typeof Ionicons.glyphMap
+    onPress?: () => void
+    destructive?: boolean
+    showChevron?: boolean
+    trailing?: React.ReactNode
+    disabled?: boolean
+}
+
+export default function SettingsRow({
+    label,
+    icon,
+    onPress,
+    destructive,
+    showChevron = true,
+    trailing,
+    disabled
+}: Props) {
+    const handlePress = () => {
+        tap(destructive ? 'warning' : 'selection')
+        onPress?.()
+    }
+
+    return (
+        <Pressable
+            onPress={handlePress}
+            disabled={disabled}
+            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+        >
+            <Ionicons
+                name={icon}
+                size={20}
+                color={destructive ? Colors.light.error : Colors.light.onBackground}
+            />
+            <Text
+                variant="body"
+                style={[styles.label, destructive && styles.destructive]}
+            >
+                {label}
+            </Text>
+            {trailing ??
+                (showChevron && !destructive ? (
+                    <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color={Colors.light.onSurfaceVariant}
+                    />
+                ) : null)}
+        </Pressable>
+    )
+}
+
+const styles = StyleSheet.create({
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.md,
+        paddingVertical: Spacing.md,
+        paddingHorizontal: Spacing.md
+    },
+    pressed: {
+        opacity: 0.6
+    },
+    label: {
+        flex: 1
+    },
+    destructive: {
+        color: Colors.light.error
+    }
+})
