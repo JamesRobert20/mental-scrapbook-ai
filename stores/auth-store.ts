@@ -27,6 +27,13 @@ type RegisterInput = {
 
 type AuthResult = { ok: true } | { ok: false; error: string };
 
+type UpdateProfileInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password?: string;
+};
+
 type AuthState = {
   users: StoredUser[];
   session: AuthSession | null;
@@ -34,6 +41,8 @@ type AuthState = {
   register: (input: RegisterInput) => AuthResult;
   login: (email: string, password: string) => AuthResult;
   logout: () => void;
+  getCurrentUser: () => StoredUser | null;
+  updateProfile: (input: UpdateProfileInput) => AuthResult;
   setHasHydrated: (value: boolean) => void;
 };
 
@@ -94,6 +103,63 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         set({ session: null });
+      },
+
+      getCurrentUser: () => {
+        const { session, users } = get();
+        if (!session) {
+          return null;
+        }
+
+        return users.find((user) => user.id === session.userId) ?? null;
+      },
+
+      updateProfile: ({ firstName, lastName, email, password }) => {
+        const { session, users } = get();
+        if (!session) {
+          return { ok: false, error: 'You must be signed in to update your profile.' };
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const emailTaken = users.some(
+          (user) => user.id !== session.userId && user.email === normalizedEmail,
+        );
+
+        if (emailTaken) {
+          return { ok: false, error: 'An account with this email already exists.' };
+        }
+
+        const updatedUsers = users.map((user) => {
+          if (user.id !== session.userId) {
+            return user;
+          }
+
+          return {
+            ...user,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: normalizedEmail,
+            password: password ?? user.password,
+          };
+        });
+
+        const updatedUser = updatedUsers.find((user) => user.id === session.userId);
+
+        if (!updatedUser) {
+          return { ok: false, error: 'Unable to update profile.' };
+        }
+
+        set({
+          users: updatedUsers,
+          session: {
+            userId: updatedUser.id,
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            email: updatedUser.email,
+          },
+        });
+
+        return { ok: true };
       },
 
       setHasHydrated: (value) => {

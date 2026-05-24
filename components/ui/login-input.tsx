@@ -38,6 +38,7 @@ type LoginPasswordInputProps = {
   value: string;
   onChangeText: (text: string) => void;
   onSubmitEditing?: () => void;
+  placeholder?: string;
 };
 
 export function LoginPasswordInput({
@@ -45,6 +46,7 @@ export function LoginPasswordInput({
   value,
   onChangeText,
   onSubmitEditing,
+  placeholder = 'Enter your password',
 }: LoginPasswordInputProps) {
   return (
     <View style={styles.wrapper}>
@@ -53,7 +55,7 @@ export function LoginPasswordInput({
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}
-        placeholder="Enter your password"
+        placeholder={placeholder}
         placeholderTextColor={DesignColors.outline}
         style={styles.input}
         autoCorrect={false}

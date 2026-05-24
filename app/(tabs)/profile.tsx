@@ -100,7 +100,15 @@ export default function ProfileScreen() {
           <AppText variant="headlineMd">{session?.firstName ?? 'Guest'}</AppText>
         </View>
 
-        <SettingsGroup title="Account Settings" items={ACCOUNT} />
+        <SettingsGroup
+          title="Account Settings"
+          items={ACCOUNT}
+          onItemPress={(label) => {
+            if (label === 'Personal Information') {
+              router.push('/personal-information');
+            }
+          }}
+        />
         <SettingsGroup title="Data Management" items={DATA} />
         <SettingsGroup title="App Preferences" items={PREFERENCES} />
         <SettingsGroup
