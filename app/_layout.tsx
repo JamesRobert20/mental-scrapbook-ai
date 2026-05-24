@@ -1,24 +1,48 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DesignColors } from '@/constants/design';
+import { useAppFonts } from '@/hooks/use-app-fonts';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
+const AppTheme = {
+  dark: false,
+  colors: {
+    primary: DesignColors.primary,
+    background: DesignColors.background,
+    card: DesignColors.surfaceContainerLowest,
+    text: DesignColors.onSurface,
+    border: DesignColors.outlineVariant,
+    notification: DesignColors.accentLavender,
+  },
+  fonts: {
+    regular: { fontFamily: 'HankenGrotesk_400Regular', fontWeight: '400' as const },
+    medium: { fontFamily: 'HankenGrotesk_500Medium', fontWeight: '500' as const },
+    bold: { fontFamily: 'HankenGrotesk_600SemiBold', fontWeight: '600' as const },
+    heavy: { fontFamily: 'HankenGrotesk_600SemiBold', fontWeight: '600' as const },
+  },
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { loaded, error } = useAppFonts();
+
+  if (!loaded && !error) {
+    return null;
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
+    <ThemeProvider value={AppTheme}>
+      <View style={{ flex: 1, backgroundColor: DesignColors.background }}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: DesignColors.background } }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="signup" />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+        <StatusBar style="dark" />
+      </View>
     </ThemeProvider>
   );
 }
