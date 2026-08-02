@@ -14,7 +14,7 @@ Built in a weekend for the SAIT Hackathon. Most of what I forget isn't important
   <tr>
     <td align="center"><img src="assets/images/screen%201.jpg" width="220" alt="Capture — hold the mic, brain-dump in one go"/><br/><sub><b>Hold and talk.</b><br/>The day lands while you speak.</sub></td>
     <td align="center"><img src="assets/images/screen%202.jpg" width="220" alt="Capture — smaller items captured into a list"/><br/><sub><b>Smaller stuff, too.</b><br/>Quietly slotted into General.</sub></td>
-    <td align="center"><img src="assets/images/screen%203.jpg" width="220" alt="Capture — priorities marked and assistant answers back"/><br/><sub><b>Ask it back.</b><br/>“What should I knock out first?”</sub></td>
+    <td align="center"><img src="assets/images/screen%203.jpg" width="220" alt="Capture — priorities marked and assistant answers back"/><br/><sub><b>Ask it back.</b><br/>"What should I knock out first?"</sub></td>
   </tr>
   <tr>
     <td align="center"><img src="assets/images/screen%204.jpg" width="220" alt="Insights — Important + Schedule timeline"/><br/><sub><b>Important + Schedule.</b><br/>Buckets are <i>derived</i>, not stored.</sub></td>
@@ -23,7 +23,7 @@ Built in a weekend for the SAIT Hackathon. Most of what I forget isn't important
   </tr>
 </table>
 
-<sub><i>Screenshots predate the rename — header still reads “Mental Scrapbook”.</i></sub>
+<sub><i>Screenshots predate the rename — header still reads "Mental Scrapbook".</i></sub>
 
 </div>
 
@@ -76,10 +76,10 @@ pnpm start --tunnel
 
 | Command                 | Description                                                                 |
 | ----------------------- | --------------------------------------------------------------------------- |
-| `pnpm start`            | Expo dev server (Metro)                                                     |
-| `pnpm start --tunnel`   | Dev server with tunnel (device + `/api`)                                    |
-| `pnpm typecheck`        | TypeScript check (`tsc --noEmit`)                                           |
-| `pnpm lint`             | ESLint (includes Prettier rules)                                            |
+| `pnpm start`            | Start Expo dev server (Metro)                                               |
+| `pnpm start --tunnel`   | Start dev server with tunnel (device + `/api`)                              |
+| `pnpm typecheck`        | Run TypeScript check (`tsc --noEmit`)                                       |
+| `pnpm lint`             | Run ESLint (includes Prettier rules)                                        |
 | `pnpm format`           | Write Prettier formatting across the repo                                   |
 | `pnpm format:check`     | Verify Prettier formatting without writing                                  |
 | `pnpm rtc`              | Pre-commit shorthand: `format` → `lint` → `typecheck`                       |
